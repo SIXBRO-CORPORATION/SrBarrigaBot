@@ -8,12 +8,13 @@ import {MessagingModule} from "../../messaging/configuration/messaging.module.js
 import {StudentController} from "../controller/student.controller.js";
 import {ConfigController} from "../controller/config.controller.js";
 import {PaymentController} from "../controller/payment.controller.js";
+import {DashboardController} from "../controller/dashboard.controller.js";
 import {StudentMapper} from "../mapper/student.mapper.js";
 import {PaymentMapper} from "../mapper/payment.mapper.js";
 
 @Module({
     imports: [BusinessModule, SecurityModule, PersistenceModule, MessagingModule],
-    controllers: [UserController, WhatsAppController, StudentController, ConfigController, PaymentController],
+    controllers: [UserController, WhatsAppController, StudentController, ConfigController, PaymentController, DashboardController],
     providers: [StudentMapper, PaymentMapper],
 })
 export class WebModule {}

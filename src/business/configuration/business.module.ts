@@ -27,6 +27,8 @@ import {RegisterPaymentPort} from "../../core/business/register-payment.port.js"
 import {RegisterPaymentAdapter} from "../register-payment.adapter.js";
 import {RemovePaymentPort} from "../../core/business/remove-payment.port.js";
 import {RemovePaymentAdapter} from "../remove-payment.adapter.js";
+import {GetDashboardSummaryPort} from "../../core/business/get-dashboard-summary.port.js";
+import {GetDashboardSummaryAdapter} from "../get-dashboard-summary.adapter.js";
 
 @Module({
     imports: [
@@ -52,6 +54,7 @@ import {RemovePaymentAdapter} from "../remove-payment.adapter.js";
         { provide: GetStudentDetailPort, useClass: GetStudentDetailAdapter },
         { provide: RegisterPaymentPort, useClass: RegisterPaymentAdapter },
         { provide: RemovePaymentPort, useClass: RemovePaymentAdapter },
+        { provide: GetDashboardSummaryPort, useClass: GetDashboardSummaryAdapter },
     ],
     exports: [
         CreateUserPort,
@@ -65,6 +68,7 @@ import {RemovePaymentAdapter} from "../remove-payment.adapter.js";
         GetStudentDetailPort,
         RegisterPaymentPort,
         RemovePaymentPort,
+        GetDashboardSummaryPort,
     ],
 })
 export class BusinessModule {}
