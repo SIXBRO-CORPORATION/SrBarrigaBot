@@ -7,7 +7,6 @@ import {ExecuteChargePort} from "../../core/business/execute-charge.port.js";
 import {ExecuteChargeAdapter} from "../execute-charge.adapter.js";
 import {SendWhatsAppMessageAdapter} from "../send-whatsapp-message.adapter.js";
 import {SendWhatsAppMessagePort} from "../../core/business/send-whatsapp-message.port.js";
-import {InfrastructureModule} from "../../infrastructure/configuration/insfrastructure.module.js";
 import {MessagingModule} from "../../messaging/configuration/messaging.module.js";
 import {ChargeScheduler} from "../../messaging/scheduler/charge.scheduler.js";
 import {ScheduleModule} from "@nestjs/schedule";
@@ -29,13 +28,14 @@ import {RemovePaymentPort} from "../../core/business/remove-payment.port.js";
 import {RemovePaymentAdapter} from "../remove-payment.adapter.js";
 import {GetDashboardSummaryPort} from "../../core/business/get-dashboard-summary.port.js";
 import {GetDashboardSummaryAdapter} from "../get-dashboard-summary.adapter.js";
+import {GetChargeablePeoplePort} from "../../core/business/get-chargeable-people.port.js";
+import {GetChargeablePeopleAdapter} from "../get-chargeable-people.adapter.js";
 
 @Module({
     imports: [
         ScheduleModule.forRoot(),
         PersistenceModule,
         SecurityModule,
-        InfrastructureModule,
         MessagingModule
     ],
     providers: [
@@ -55,6 +55,7 @@ import {GetDashboardSummaryAdapter} from "../get-dashboard-summary.adapter.js";
         { provide: RegisterPaymentPort, useClass: RegisterPaymentAdapter },
         { provide: RemovePaymentPort, useClass: RemovePaymentAdapter },
         { provide: GetDashboardSummaryPort, useClass: GetDashboardSummaryAdapter },
+        { provide: GetChargeablePeoplePort, useClass: GetChargeablePeopleAdapter },
     ],
     exports: [
         CreateUserPort,
@@ -69,6 +70,7 @@ import {GetDashboardSummaryAdapter} from "../get-dashboard-summary.adapter.js";
         RegisterPaymentPort,
         RemovePaymentPort,
         GetDashboardSummaryPort,
+        GetChargeablePeoplePort,
     ],
 })
 export class BusinessModule {}

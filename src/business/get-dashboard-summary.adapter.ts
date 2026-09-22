@@ -30,7 +30,7 @@ export class GetDashboardSummaryAdapter implements GetDashboardSummaryPort {
         const monthlyFee = Number(monthlyFeeConfig.value);
         const billingStartDate = new Date(billingStartDateConfig.value);
         const today = new Date();
-        
+
         const allStudents = await this.studentRepositoryPort.findAll();
 
         let alunosAtivos = 0;
