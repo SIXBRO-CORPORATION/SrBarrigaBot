@@ -18,7 +18,7 @@ export class PaymentMapper {
             createdAt: payment.createdAt,
         });
     }
-    
+
     private async resolveReceiptUrl(receiptKey: string | null): Promise<string | null> {
         if (!receiptKey) {
             return null;
