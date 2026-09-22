@@ -11,6 +11,14 @@ import {InfrastructureModule} from "../../infrastructure/configuration/insfrastr
 import {MessagingModule} from "../../messaging/configuration/messaging.module.js";
 import {ChargeScheduler} from "../../messaging/scheduler/charge.scheduler.js";
 import {ScheduleModule} from "@nestjs/schedule";
+import {CreateStudentPort} from "../../core/business/create-student.port.js";
+import {CreateStudentAdapter} from "../create-student.adapter.js";
+import {UpdateStudentPort} from "../../core/business/update-student.port.js";
+import {UpdateStudentAdapter} from "../update-student.adapter.js";
+import {RemoveStudentPort} from "../../core/business/remove-student.port.js";
+import {RemoveStudentAdapter} from "../remove-student.adapter.js";
+import {UpdateSystemConfigPort} from "../../core/business/update-system-config.port.js";
+import {UpdateSystemConfigAdapter} from "../update-system-config.adapter.js";
 
 @Module({
     imports: [
@@ -28,11 +36,19 @@ import {ScheduleModule} from "@nestjs/schedule";
             provide: SendWhatsAppMessagePort,
             useClass: SendWhatsAppMessageAdapter
         },
+        { provide: CreateStudentPort, useClass: CreateStudentAdapter },
+        { provide: UpdateStudentPort, useClass: UpdateStudentAdapter },
+        { provide: RemoveStudentPort, useClass: RemoveStudentAdapter },
+        { provide: UpdateSystemConfigPort, useClass: UpdateSystemConfigAdapter },
     ],
     exports: [
         CreateUserPort,
         ExecuteChargePort,
         SendWhatsAppMessagePort,
+        CreateStudentPort,
+        UpdateStudentPort,
+        RemoveStudentPort,
+        UpdateSystemConfigPort,
     ],
 })
 export class BusinessModule {}

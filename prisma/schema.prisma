@@ -18,3 +18,42 @@ model User {
 
   @@map("users")
 }
+
+model Student {
+  id            String    @id @default(uuid())
+  name          String
+  phone         String
+  active        Boolean   @default(true)
+  inactivatedAt DateTime? @map("inactivated_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  modifiedAt    DateTime  @updatedAt @map("modified_at")
+  deletedAt     DateTime? @map("deleted_at")
+
+  payments      Payment[]
+
+  @@map("students")
+}
+
+model Payment {
+  id         String    @id @default(uuid())
+  studentId  String    @map("student_id")
+  student    Student   @relation(fields: [studentId], references: [id])
+  amount     Decimal   @db.Decimal(10, 2)
+  paidAt     DateTime  @map("paid_at")
+  note       String?
+  receiptUrl String?   @map("receipt_url")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  modifiedAt DateTime  @updatedAt @map("modified_at")
+  deletedAt  DateTime? @map("deleted_at")
+
+  @@map("payments")
+}
+
+model SystemConfig {
+  id         String   @id @default(uuid())
+  key        String   @unique
+  value      String
+  modifiedAt DateTime @updatedAt @map("modified_at")
+
+  @@map("system_config")
+}
