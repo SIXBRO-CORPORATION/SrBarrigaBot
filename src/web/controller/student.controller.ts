@@ -2,15 +2,22 @@ import {Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Patch, Post,
 import {CreateStudentPort} from '../../core/business/create-student.port.js';
 import {UpdateStudentPort} from '../../core/business/update-student.port.js';
 import {RemoveStudentPort} from '../../core/business/remove-student.port.js';
-import {StudentRepositoryPort} from '../../core/persistence/student.repository.port.js';
+import {ListStudentsPort} from '../../core/business/list-students.port.js';
+import {GetStudentDetailPort} from '../../core/business/get-student-detail.port.js';
 import {Context} from '../../core/context.js';
 import {Student} from '../../domain/student.js';
+import {StudentSummary} from '../../domain/student-summary.js';
+import {StudentDetail} from '../../domain/student-detail.js';
 import {ApiResponse} from '../commons/api.response.js';
 import {StudentRequest} from '../model/request/student.request.js';
 import {StudentUpdateRequest} from '../model/request/student-update.request.js';
 import {StudentResponse} from '../model/response/student.response.js';
-import {BusinessException} from '../../domain/exceptions/business.exception.js';
+import {StudentSummaryResponse} from '../model/response/student-summary.response.js';
+import {StudentDetailResponse} from '../model/response/student-detail.response.js';
+import {StudentMonthStatusResponse} from '../model/response/student-month-status.response.js';
+import {PaymentResponse} from '../model/response/payment.response.js';
 import {JwtAuthGuard} from '../../security/guards/jwt-auth.guard.js';
+import {StudentMapper} from "../mapper/student.mapper.js";
 
 @Controller('students')
 @UseGuards(JwtAuthGuard)
@@ -19,7 +26,9 @@ export class StudentController {
         private readonly createStudentPort: CreateStudentPort,
         private readonly updateStudentPort: UpdateStudentPort,
         private readonly removeStudentPort: RemoveStudentPort,
-        private readonly studentRepositoryPort: StudentRepositoryPort,
+        private readonly listStudentsPort: ListStudentsPort,
+        private readonly getStudentDetailPort: GetStudentDetailPort,
+        private readonly studentMapper: StudentMapper,
     ) {}
 
     @Post()
@@ -33,26 +42,42 @@ export class StudentController {
         const context = new Context(student);
         const saved = await this.createStudentPort.execute(context);
 
-        return ApiResponse.success(this.toResponse(saved), 'Aluno cadastrado com sucesso');
+        return ApiResponse.success(this.studentMapper.toResponse(saved), 'Aluno cadastrado com sucesso');
     }
 
     @Get()
     @HttpCode(HttpStatus.OK)
-    async list(): Promise<ApiResponse<StudentResponse[]>> {
-        const students = await this.studentRepositoryPort.findAllActive();
-        return ApiResponse.success(students.map((s) => this.toResponse(s)));
+    async list(): Promise<ApiResponse<StudentSummaryResponse[]>> {
+        const context = new Context();
+        const summaries = await this.listStudentsPort.execute(context);
+
+        return ApiResponse.success(summaries.map((s) => this.studentMapper.toSummaryResponse(s)));
     }
 
     @Get(':id')
     @HttpCode(HttpStatus.OK)
-    async get(@Param('id') id: string): Promise<ApiResponse<StudentResponse>> {
-        const student = await this.studentRepositoryPort.get(id);
+    async get(@Param('id') id: string): Promise<ApiResponse<StudentDetailResponse>> {
+        const context = new Context();
+        context.putProperty('id', id);
 
-        if (!student || student.deletedAt) {
-            throw new BusinessException('Aluno não encontrado');
-        }
+        const detail = await this.getStudentDetailPort.execute(context);
 
-        return ApiResponse.success(this.toResponse(student));
+        return ApiResponse.success(this.studentMapper.toDetailResponse(detail));
+    }
+
+    @Get(':id/timeline')
+    @HttpCode(HttpStatus.OK)
+    async timeline(@Param('id') id: string): Promise<ApiResponse<StudentMonthStatusResponse[]>> {
+        const context = new Context();
+        context.putProperty('id', id);
+
+        const detail = await this.getStudentDetailPort.execute(context);
+
+        return ApiResponse.success(
+            detail.statusMesAMes.map(
+                (m) => new StudentMonthStatusResponse({ numero: m.numero, referencia: m.referencia, status: m.status }),
+            ),
+        );
     }
 
     @Patch(':id')
@@ -70,7 +95,7 @@ export class StudentController {
         const context = new Context(student);
         const updated = await this.updateStudentPort.execute(context);
 
-        return ApiResponse.success(this.toResponse(updated), 'Aluno atualizado com sucesso');
+        return ApiResponse.success(this.studentMapper.toResponse(updated), 'Aluno atualizado com sucesso');
     }
 
     @Delete(':id')
@@ -81,18 +106,6 @@ export class StudentController {
 
         const removed = await this.removeStudentPort.execute(context);
 
-        return ApiResponse.success(this.toResponse(removed), 'Aluno removido com sucesso');
-    }
-
-    private toResponse(student: Student): StudentResponse {
-        return new StudentResponse({
-            id: student.id,
-            name: student.name,
-            matricula: student.matricula,
-            phone: student.phone,
-            active: student.active,
-            inactivatedAt: student.inactivatedAt,
-            createdAt: student.createdAt,
-        });
+        return ApiResponse.success(this.studentMapper.toResponse(removed), 'Aluno removido com sucesso');
     }
 }

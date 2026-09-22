@@ -19,6 +19,10 @@ import {RemoveStudentPort} from "../../core/business/remove-student.port.js";
 import {RemoveStudentAdapter} from "../remove-student.adapter.js";
 import {UpdateSystemConfigPort} from "../../core/business/update-system-config.port.js";
 import {UpdateSystemConfigAdapter} from "../update-system-config.adapter.js";
+import {ListStudentsPort} from "../../core/business/list-students.port.js";
+import {ListStudentsAdapter} from "../list-students.adapter.js";
+import {GetStudentDetailPort} from "../../core/business/get-student-detail.port.js";
+import {GetStudentDetailAdapter} from "../get-student-detail.adapter.js";
 
 @Module({
     imports: [
@@ -40,6 +44,8 @@ import {UpdateSystemConfigAdapter} from "../update-system-config.adapter.js";
         { provide: UpdateStudentPort, useClass: UpdateStudentAdapter },
         { provide: RemoveStudentPort, useClass: RemoveStudentAdapter },
         { provide: UpdateSystemConfigPort, useClass: UpdateSystemConfigAdapter },
+        { provide: ListStudentsPort, useClass: ListStudentsAdapter },
+        { provide: GetStudentDetailPort, useClass: GetStudentDetailAdapter },
     ],
     exports: [
         CreateUserPort,
@@ -49,6 +55,8 @@ import {UpdateSystemConfigAdapter} from "../update-system-config.adapter.js";
         UpdateStudentPort,
         RemoveStudentPort,
         UpdateSystemConfigPort,
+        ListStudentsPort,
+        GetStudentDetailPort,
     ],
 })
 export class BusinessModule {}
