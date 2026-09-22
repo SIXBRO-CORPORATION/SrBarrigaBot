@@ -27,6 +27,7 @@ export class StudentController {
     async create(@Body() request: StudentRequest): Promise<ApiResponse<StudentResponse>> {
         const student = new Student();
         student.name = request.name;
+        student.matricula = request.matricula;
         student.phone = request.phone;
 
         const context = new Context(student);
@@ -63,6 +64,7 @@ export class StudentController {
         const student = new Student();
         student.id = id;
         if (request.name !== undefined) student.name = request.name;
+        if (request.matricula !== undefined) student.matricula = request.matricula;
         if (request.phone !== undefined) student.phone = request.phone;
 
         const context = new Context(student);
@@ -86,6 +88,7 @@ export class StudentController {
         return new StudentResponse({
             id: student.id,
             name: student.name,
+            matricula: student.matricula,
             phone: student.phone,
             active: student.active,
             inactivatedAt: student.inactivatedAt,

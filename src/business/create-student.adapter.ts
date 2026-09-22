@@ -20,12 +20,28 @@ export class CreateStudentAdapter implements CreateStudentPort {
             throw new BusinessException('Por favor, informe o nome do aluno.');
         }
 
+        if (!student.matricula || student.matricula.trim() === '') {
+            throw new BusinessException('Por favor, informe a matrícula do aluno.');
+        }
+
+        const matricula = student.matricula.trim();
+
+        if (!/^[0-9]+$/.test(matricula)) {
+            throw new BusinessException('A matrícula deve conter apenas números.');
+        }
+
         if (!student.phone || student.phone.trim() === '') {
             throw new BusinessException('Por favor, informe o telefone do aluno.');
         }
 
+        const matriculaExists = await this.studentRepositoryPort.existsByMatricula(matricula);
+        if (matriculaExists) {
+            throw new BusinessException('Já existe um aluno com essa matrícula.');
+        }
+
         const newStudent = new Student();
         newStudent.name = student.name.trim();
+        newStudent.matricula = matricula;
         newStudent.phone = student.phone.trim();
         newStudent.active = true;
         newStudent.inactivatedAt = null;

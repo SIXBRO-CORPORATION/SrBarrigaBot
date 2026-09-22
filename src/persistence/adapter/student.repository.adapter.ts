@@ -39,6 +39,21 @@ export class StudentRepositoryAdapter implements StudentRepositoryPort {
         return this.mapper.toDomain(saved);
     }
 
+    async findByMatricula(matricula: string): Promise<Student | null> {
+        const entity = await this.prisma.student.findUnique({ where: { matricula } });
+        return entity ? this.mapper.toDomain(entity) : null;
+    }
+
+    async existsByMatricula(matricula: string, excludeStudentId?: string): Promise<boolean> {
+        const count = await this.prisma.student.count({
+            where: {
+                matricula,
+                ...(excludeStudentId ? { id: { not: excludeStudentId } } : {}),
+            },
+        });
+        return count > 0;
+    }
+
     async delete(model: Student): Promise<Student> {
         const deleted = await this.prisma.student.delete({
             where: { id: model.id },

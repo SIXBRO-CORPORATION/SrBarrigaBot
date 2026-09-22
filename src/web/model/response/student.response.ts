@@ -1,6 +1,7 @@
 export class StudentResponse {
     id: string;
     name: string;
+    matricula: string;
     phone: string;
     active: boolean;
     inactivatedAt: Date | null;

@@ -8,6 +8,7 @@ export class StudentMapper {
         const student = new Student();
         student.id = entity.id;
         student.name = entity.name;
+        student.matricula = entity.matricula;
         student.phone = entity.phone;
         student.active = entity.active;
         student.inactivatedAt = entity.inactivatedAt;
@@ -21,6 +22,7 @@ export class StudentMapper {
         return {
             id: domain.id,
             name: domain.name,
+            matricula: domain.matricula,
             phone: domain.phone,
             active: domain.active,
             inactivatedAt: domain.inactivatedAt,

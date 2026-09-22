@@ -29,6 +29,27 @@ export class UpdateStudentAdapter implements UpdateStudentPort {
             existing.name = patch.name.trim();
         }
 
+        if (patch.matricula !== undefined) {
+            const matricula = patch.matricula.trim();
+
+            if (matricula === '') {
+                throw new BusinessException('A matrícula do aluno não pode ficar vazia.');
+            }
+
+            if (!/^[0-9]+$/.test(matricula)) {
+                throw new BusinessException('A matrícula deve conter apenas números.');
+            }
+
+            if (matricula !== existing.matricula) {
+                const matriculaExists = await this.studentRepositoryPort.existsByMatricula(matricula, existing.id);
+                if (matriculaExists) {
+                    throw new BusinessException('Já existe um aluno com essa matrícula.');
+                }
+            }
+
+            existing.matricula = matricula;
+        }
+
         if (patch.phone !== undefined) {
             if (patch.phone.trim() === '') {
                 throw new BusinessException('O telefone do aluno não pode ficar vazio.');
