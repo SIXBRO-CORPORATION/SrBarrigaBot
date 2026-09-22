@@ -29,7 +29,7 @@ async function bootstrap() {
         transform: true,
   }));
   app.enableCors({
-        origin: ['http://localhost:3000', 'https://srbarrigabotcomputaria.vercel.app'],
+        origin: ['http://localhost:3000', 'https://srbarrigabot.vercel.app'],
         methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
         credentials: true,
   });
