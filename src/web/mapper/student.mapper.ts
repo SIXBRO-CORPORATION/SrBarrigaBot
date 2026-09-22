@@ -5,11 +5,13 @@ import {StudentSummaryResponse} from "../model/response/student-summary.response
 import {StudentDetail} from "../../domain/student-detail.js";
 import {StudentDetailResponse} from "../model/response/student-detail.response.js";
 import {StudentMonthStatusResponse} from "../model/response/student-month-status.response.js";
-import {PaymentResponse} from "../model/response/payment.response.js";
 import {StudentResponse} from "../model/response/student.response.js";
+import {PaymentMapper} from "./payment.mapper.js";
 
 @Injectable()
 export class StudentMapper {
+    constructor(private readonly paymentMapper: PaymentMapper) {}
+
     public toResponse(student: Student): StudentResponse {
         return new StudentResponse({
             id: student.id,
@@ -34,7 +36,7 @@ export class StudentMapper {
         });
     }
 
-    public toDetailResponse(detail: StudentDetail): StudentDetailResponse {
+    public async toDetailResponse(detail: StudentDetail): Promise<StudentDetailResponse> {
         return new StudentDetailResponse({
             student: this.toResponse(detail.student),
             mesesDevidos: detail.mesesDevidos,
@@ -46,17 +48,7 @@ export class StudentMapper {
             statusMesAMes: detail.statusMesAMes.map(
                 (m) => new StudentMonthStatusResponse({ numero: m.numero, referencia: m.referencia, status: m.status }),
             ),
-            payments: detail.payments.map(
-                (p) =>
-                    new PaymentResponse({
-                        id: p.id,
-                        amount: p.amount,
-                        paidAt: p.paidAt,
-                        note: p.note,
-                        receiptUrl: p.receiptUrl,
-                        createdAt: p.createdAt,
-                    }),
-            ),
+            payments: await Promise.all(detail.payments.map((p) => this.paymentMapper.toResponse(p))),
         });
     }
 }

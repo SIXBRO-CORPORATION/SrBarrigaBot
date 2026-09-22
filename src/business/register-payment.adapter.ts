@@ -5,12 +5,15 @@ import {Payment} from '../domain/payment.js';
 import {BusinessException} from '../domain/exceptions/business.exception.js';
 import {PaymentRepositoryPort} from '../core/persistence/payment.repository.port.js';
 import {StudentRepositoryPort} from '../core/persistence/student.repository.port.js';
+import {UploadFilePort} from '../core/infrastructure/upload-file.port.js';
+import {UploadFileInput} from '../domain/upload-file-input.js';
 
 @Injectable()
 export class RegisterPaymentAdapter implements RegisterPaymentPort {
     constructor(
         private readonly paymentRepositoryPort: PaymentRepositoryPort,
         private readonly studentRepositoryPort: StudentRepositoryPort,
+        private readonly uploadFilePort: UploadFilePort,
     ) {}
 
     async execute(context: Context): Promise<Payment> {
@@ -38,12 +41,20 @@ export class RegisterPaymentAdapter implements RegisterPaymentPort {
             throw new BusinessException('Por favor, informe a data do pagamento.');
         }
 
+        let receiptKey: string | null = null;
+        const fileInput = context.getProperty<UploadFileInput>('file');
+
+        if (fileInput) {
+            fileInput.folder = `comprovantes/${student.id}`;
+            receiptKey = await this.uploadFilePort.execute(new Context(fileInput));
+        }
+
         const newPayment = new Payment();
         newPayment.studentId = student.id;
         newPayment.amount = payment.amount;
         newPayment.paidAt = payment.paidAt;
         newPayment.note = payment.note?.trim() || null;
-        newPayment.receiptUrl = payment.receiptUrl?.trim() || null;
+        newPayment.receiptUrl = receiptKey;
         newPayment.createdAt = new Date();
         newPayment.modifiedAt = new Date();
 

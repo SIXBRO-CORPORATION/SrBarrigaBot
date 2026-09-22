@@ -62,7 +62,7 @@ export class StudentController {
 
         const detail = await this.getStudentDetailPort.execute(context);
 
-        return ApiResponse.success(this.studentMapper.toDetailResponse(detail));
+        return ApiResponse.success(await this.studentMapper.toDetailResponse(detail));
     }
 
     @Get(':id/timeline')

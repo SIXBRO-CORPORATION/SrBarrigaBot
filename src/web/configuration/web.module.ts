@@ -11,9 +11,10 @@ import {PaymentController} from "../controller/payment.controller.js";
 import {DashboardController} from "../controller/dashboard.controller.js";
 import {StudentMapper} from "../mapper/student.mapper.js";
 import {PaymentMapper} from "../mapper/payment.mapper.js";
+import {InfrastructureModule} from "../../infrastructure/configuration/insfrastructure.module.js";
 
 @Module({
-    imports: [BusinessModule, SecurityModule, PersistenceModule, MessagingModule],
+    imports: [BusinessModule, SecurityModule, PersistenceModule, MessagingModule, InfrastructureModule],
     controllers: [UserController, WhatsAppController, StudentController, ConfigController, PaymentController, DashboardController],
     providers: [StudentMapper, PaymentMapper],
 })

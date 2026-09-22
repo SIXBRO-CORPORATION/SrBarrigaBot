@@ -30,13 +30,15 @@ import {GetDashboardSummaryPort} from "../../core/business/get-dashboard-summary
 import {GetDashboardSummaryAdapter} from "../get-dashboard-summary.adapter.js";
 import {GetChargeablePeoplePort} from "../../core/business/get-chargeable-people.port.js";
 import {GetChargeablePeopleAdapter} from "../get-chargeable-people.adapter.js";
+import {InfrastructureModule} from "../../infrastructure/configuration/insfrastructure.module.js";
 
 @Module({
     imports: [
         ScheduleModule.forRoot(),
         PersistenceModule,
         SecurityModule,
-        MessagingModule
+        MessagingModule,
+        InfrastructureModule,
     ],
     providers: [
         ChargeScheduler,

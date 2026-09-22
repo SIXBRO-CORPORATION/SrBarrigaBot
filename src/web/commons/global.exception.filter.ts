@@ -10,6 +10,7 @@ import {
     UnauthorizedException,
 } from '@nestjs/common';
 import {Request, Response} from 'express';
+import {MulterError} from 'multer';
 import {ApiResponse} from './api.response.js';
 import {BusinessException} from '../../domain/exceptions/business.exception.js';
 
@@ -32,6 +33,15 @@ export class GlobalExceptionFilter implements ExceptionFilter {
             message = exception.message;
             code = 'BUSINESS_ERROR';
             this.logger.warn(`Business exception: ${message} - Path: ${request.url}`);
+        }
+
+        else if (exception instanceof MulterError) {
+            status = HttpStatus.BAD_REQUEST;
+            code = 'VALIDATION_ERROR';
+            message = exception.code === 'LIMIT_FILE_SIZE'
+                ? 'O comprovante deve ter no máximo 10MB.'
+                : 'Falha ao processar o arquivo enviado.';
+            this.logger.warn(`Multer error: ${exception.code} - Path: ${request.url}`);
         }
 
         else if (exception instanceof BadRequestException) {
