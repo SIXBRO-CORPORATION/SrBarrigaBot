@@ -4,46 +4,70 @@ import {Context} from '../core/context.js';
 import {GetChargeablePeoplePort} from '../core/business/get-chargeable-people.port.js';
 import {SendWhatsAppMessagePort} from '../core/business/send-whatsapp-message.port.js';
 import {ChargeablePerson} from '../domain/chargeable-person.js';
+import {ChargeProgressPort} from '../core/messaging/charge-progress.port.js';
+import {BusinessException} from '../domain/exceptions/business.exception.js';
 
 @Injectable()
 export class ExecuteChargeAdapter implements ExecuteChargePort {
     constructor(
         private readonly getChargeablePeoplePort: GetChargeablePeoplePort,
         private readonly sendWhatsAppMessagePort: SendWhatsAppMessagePort,
+        private readonly chargeProgressPort: ChargeProgressPort,
     ) {}
 
     async execute(context: Context): Promise<void> {
-        console.log('Buscando alunos a cobrar...');
 
-        const contextPessoas = new Context();
-        const pessoas = await this.getChargeablePeoplePort.execute(contextPessoas);
-
-        if (pessoas.length === 0) {
-            console.warn('Nenhum aluno a cobrar no momento');
-            return;
+        if (!this.chargeProgressPort.start()) {
+            throw new BusinessException('Já existe uma cobrança em andamento');
         }
 
-        console.log(`Enviando lembretes para ${pessoas.length} alunos...`);
+        try {
+            console.log('Buscando alunos a cobrar...');
 
-        for (const pessoa of pessoas) {
-            try {
-                const mensagem = this.criarMensagem(pessoa);
+            const contextPessoas = new Context();
+            const pessoas = await this.getChargeablePeoplePort.execute(contextPessoas);
 
-                const contextMessage = new Context();
-                contextMessage.putProperty('number', pessoa.telefone);
-                contextMessage.putProperty('message', mensagem);
+            this.chargeProgressPort.setTotal(pessoas.length);
 
-                await this.sendWhatsAppMessagePort.execute(contextMessage);
-
-                await this.sleep(5000);
-
-            } catch (error) {
-                const message = error instanceof Error ? error.message : 'Erro desconhecido';
-                console.error(`Erro ao enviar mensagem para ${pessoa.nome}: ` + message);
+            if (pessoas.length === 0) {
+                console.warn('Nenhum aluno a cobrar no momento');
+                this.chargeProgressPort.complete();
+                return;
             }
-        }
 
-        console.log('Cobrança concluída!');
+            console.log(`Enviando lembretes para ${pessoas.length} alunos...`);
+
+            for (let i = 0; i < pessoas.length; i++) {
+                const pessoa = pessoas[i];
+
+                try {
+                    const mensagem = this.criarMensagem(pessoa);
+
+                    const contextMessage = new Context();
+                    contextMessage.putProperty('number', pessoa.telefone);
+                    contextMessage.putProperty('message', mensagem);
+
+                    await this.sendWhatsAppMessagePort.execute(contextMessage);
+                    this.chargeProgressPort.reportSent();
+
+                    if (i < pessoas.length - 1) {
+                        await this.sleep(5000);
+                    }
+
+                } catch (error) {
+                    const message = error instanceof Error ? error.message : 'Erro desconhecido';
+                    console.error(`Erro ao enviar mensagem para ${pessoa.nome}: ` + message);
+                    this.chargeProgressPort.reportFailed();
+                }
+            }
+
+            console.log('Cobrança concluída!');
+            this.chargeProgressPort.complete();
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Erro desconhecido';
+            this.chargeProgressPort.fail(message);
+            throw error;
+        }
     }
 
     private criarMensagem(pessoa: ChargeablePerson): string {

@@ -1,10 +1,13 @@
-import {Controller, Get, Post, HttpCode, HttpStatus, Sse, UseGuards} from '@nestjs/common';
+import {ConflictException, Controller, Get, Post, HttpCode, HttpStatus, Sse, UseGuards} from '@nestjs/common';
 import {WhatsAppConnectionPort} from '../../core/messaging/whatsapp-connection.port.js';
 import {ExecuteChargePort} from '../../core/business/execute-charge.port.js';
 import {Context} from '../../core/context.js';
 import {ApiResponse} from '../commons/api.response.js';
 import {JwtAuthGuard} from '../../security/guards/jwt-auth.guard.js';
 import {WhatsAppService} from '../../messaging/services/whatsapp.service.js';
+import {ChargeProgressPort} from '../../core/messaging/charge-progress.port.js';
+import {ChargeProgress} from '../../domain/charge-progress.js';
+import {BusinessException} from '../../domain/exceptions/business.exception.js';
 
 interface WhatsAppStatusResponse {
     isConnected: boolean;
@@ -18,6 +21,7 @@ export class WhatsAppController {
         private readonly whatsappConnectionPort: WhatsAppConnectionPort,
         private readonly executeChargePort: ExecuteChargePort,
         private readonly whatsappService: WhatsAppService,
+        private readonly chargeProgressPort: ChargeProgressPort,
     ) {}
 
     @Get('status')
@@ -48,10 +52,24 @@ export class WhatsAppController {
     }
 
     @Post('execute-charge')
-    @HttpCode(HttpStatus.OK)
-    async executeCharge(): Promise<ApiResponse<string>> {
-        const context = new Context();
-        await this.executeChargePort.execute(context);
-        return ApiResponse.successMessage('Cobrança executada com sucesso');
+    @HttpCode(HttpStatus.ACCEPTED)
+    async executeCharge(): Promise<ApiResponse<ChargeProgress>> {
+        if (!this.whatsappConnectionPort.isConnected()) {
+            throw new BusinessException('WhatsApp não está conectado');
+        }
+
+        if (this.chargeProgressPort.isRunning()) {
+            throw new ConflictException('Já existe uma cobrança em andamento');
+        }
+
+        this.executeChargePort.execute(new Context()).catch((error: unknown) => {
+            const message = error instanceof Error ? error.message : 'Erro desconhecido';
+            console.error('Erro ao executar cobrança manual: ' + message);
+        });
+
+        return ApiResponse.success(
+            this.chargeProgressPort.getState(),
+            'Cobrança iniciada em segundo plano',
+        );
     }
 }

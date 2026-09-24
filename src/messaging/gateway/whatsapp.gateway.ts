@@ -10,6 +10,7 @@ import { Server, Socket } from 'socket.io';
 import { Injectable, UseGuards } from '@nestjs/common';
 import { WhatsAppService } from '../services/whatsapp.service.js';
 import { WsJwtGuard } from '../../security/guards/ws-jwt.guard.js';
+import { ChargeProgressPort } from '../../core/messaging/charge-progress.port.js';
 
 @Injectable()
 @WebSocketGateway({
@@ -23,7 +24,10 @@ export class WhatsAppGateway implements OnGatewayInit, OnGatewayConnection, OnGa
     @WebSocketServer()
     server: Server;
 
-    constructor(private readonly whatsappService: WhatsAppService) {}
+    constructor(
+        private readonly whatsappService: WhatsAppService,
+        private readonly chargeProgressPort: ChargeProgressPort,
+    ) {}
 
     afterInit(server: Server) {
         console.log('WebSocket Gateway initialized');
@@ -52,6 +56,10 @@ export class WhatsAppGateway implements OnGatewayInit, OnGatewayConnection, OnGa
                 needsQR: true,
             });
         });
+
+        this.chargeProgressPort.onChange((state) => {
+            this.server.emit('whatsapp:charge', state);
+        });
     }
 
     async handleConnection(client: Socket) {
@@ -71,6 +79,8 @@ export class WhatsAppGateway implements OnGatewayInit, OnGatewayConnection, OnGa
         if (status.qrCode) {
             client.emit('whatsapp:qr', { qrCode: status.qrCode });
         }
+
+        client.emit('whatsapp:charge', this.chargeProgressPort.getState());
     }
 
     handleDisconnect(client: Socket) {
