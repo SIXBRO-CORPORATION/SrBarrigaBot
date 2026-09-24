@@ -1,8 +1,8 @@
-import {Injectable} from '@nestjs/common';
-import {StudentRepositoryPort} from '../../core/persistence/student.repository.port.js';
-import {Student} from '../../domain/student.js';
-import {PrismaConfiguration} from '../configuration/prisma.configuration.js';
-import {StudentMapper} from '../mapper/student.mapper.js';
+import { Injectable } from '@nestjs/common';
+import { StudentRepositoryPort } from '../../core/persistence/student.repository.port.js';
+import { Student } from '../../domain/student.js';
+import { PrismaConfiguration } from '../configuration/prisma.configuration.js';
+import { StudentMapper } from '../mapper/student.mapper.js';
 
 @Injectable()
 export class StudentRepositoryAdapter implements StudentRepositoryPort {
@@ -12,12 +12,16 @@ export class StudentRepositoryAdapter implements StudentRepositoryPort {
     ) {}
 
     async get(id: string): Promise<Student | null> {
-        const entity = await this.prisma.student.findUnique({ where: { id } });
+        const entity = await this.prisma.student.findFirst({
+            where: { id, deletedAt: null },
+        });
         return entity ? this.mapper.toDomain(entity) : null;
     }
 
     async findAll(): Promise<Student[]> {
-        const entities = await this.prisma.student.findMany();
+        const entities = await this.prisma.student.findMany({
+            where: { deletedAt: null },
+        });
         return entities.map((e) => this.mapper.toDomain(e));
     }
 
@@ -33,14 +37,19 @@ export class StudentRepositoryAdapter implements StudentRepositoryPort {
         const data = this.mapper.toEntity(model);
 
         const saved = model.id
-            ? await this.prisma.student.update({ where: { id: model.id }, data })
+            ? await this.prisma.student.update({
+                where: { id: model.id },
+                data,
+            })
             : await this.prisma.student.create({ data });
 
         return this.mapper.toDomain(saved);
     }
 
     async findByMatricula(matricula: string): Promise<Student | null> {
-        const entity = await this.prisma.student.findUnique({ where: { matricula } });
+        const entity = await this.prisma.student.findFirst({
+            where: { matricula, deletedAt: null },
+        });
         return entity ? this.mapper.toDomain(entity) : null;
     }
 
@@ -48,6 +57,7 @@ export class StudentRepositoryAdapter implements StudentRepositoryPort {
         const count = await this.prisma.student.count({
             where: {
                 matricula,
+                deletedAt: null,
                 ...(excludeStudentId ? { id: { not: excludeStudentId } } : {}),
             },
         });

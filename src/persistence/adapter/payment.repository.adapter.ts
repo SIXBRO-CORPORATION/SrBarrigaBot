@@ -1,8 +1,8 @@
-import {Injectable} from '@nestjs/common';
-import {PaymentRepositoryPort} from '../../core/persistence/payment.repository.port.js';
-import {Payment} from '../../domain/payment.js';
-import {PrismaConfiguration} from '../configuration/prisma.configuration.js';
-import {PaymentMapper} from '../mapper/payment.mapper.js';
+import { Injectable } from '@nestjs/common';
+import { PaymentRepositoryPort } from '../../core/persistence/payment.repository.port.js';
+import { Payment } from '../../domain/payment.js';
+import { PrismaConfiguration } from '../configuration/prisma.configuration.js';
+import { PaymentMapper } from '../mapper/payment.mapper.js';
 
 @Injectable()
 export class PaymentRepositoryAdapter implements PaymentRepositoryPort {
@@ -12,12 +12,16 @@ export class PaymentRepositoryAdapter implements PaymentRepositoryPort {
     ) {}
 
     async get(id: string): Promise<Payment | null> {
-        const entity = await this.prisma.payment.findUnique({ where: { id } });
+        const entity = await this.prisma.payment.findFirst({
+            where: { id, deletedAt: null },
+        });
         return entity ? this.mapper.toDomain(entity) : null;
     }
 
     async findAll(): Promise<Payment[]> {
-        const entities = await this.prisma.payment.findMany();
+        const entities = await this.prisma.payment.findMany({
+            where: { deletedAt: null },
+        });
         return entities.map((e) => this.mapper.toDomain(e));
     }
 

@@ -1,8 +1,8 @@
-import {Injectable} from '@nestjs/common';
-import {UserRepositoryPort} from '../../core/persistence/user.repository.port.js';
-import {User} from '../../domain/user.js';
-import {PrismaConfiguration} from '../configuration/prisma.configuration.js';
-import {UserMapper} from '../mapper/user.mapper.js';
+import { Injectable } from '@nestjs/common';
+import { UserRepositoryPort } from '../../core/persistence/user.repository.port.js';
+import { User } from '../../domain/user.js';
+import { PrismaConfiguration } from '../configuration/prisma.configuration.js';
+import { UserMapper } from '../mapper/user.mapper.js';
 
 @Injectable()
 export class UserRepositoryAdapter implements UserRepositoryPort {
@@ -12,12 +12,16 @@ export class UserRepositoryAdapter implements UserRepositoryPort {
     ) {}
 
     async get(id: string): Promise<User | null> {
-        const entity = await this.prisma.user.findUnique({ where: { id } });
+        const entity = await this.prisma.user.findFirst({
+            where: { id, deletedAt: null },
+        });
         return entity ? this.mapper.toDomain(entity) : null;
     }
 
     async findAll(): Promise<User[]> {
-        const entities = await this.prisma.user.findMany();
+        const entities = await this.prisma.user.findMany({
+            where: { deletedAt: null },
+        });
         return entities.map((e) => this.mapper.toDomain(e));
     }
 
@@ -47,12 +51,16 @@ export class UserRepositoryAdapter implements UserRepositoryPort {
     }
 
     async findByEmail(email: string): Promise<User | null> {
-        const entity = await this.prisma.user.findUnique({ where: { email } });
+        const entity = await this.prisma.user.findFirst({
+            where: { email, deletedAt: null },
+        });
         return entity ? this.mapper.toDomain(entity) : null;
     }
 
     async existsByEmail(email: string): Promise<boolean> {
-        const count = await this.prisma.user.count({ where: { email } });
+        const count = await this.prisma.user.count({
+            where: { email, deletedAt: null },
+        });
         return count > 0;
     }
 }
