@@ -31,6 +31,16 @@ import {GetDashboardSummaryAdapter} from "../get-dashboard-summary.adapter.js";
 import {GetChargeablePeoplePort} from "../../core/business/get-chargeable-people.port.js";
 import {GetChargeablePeopleAdapter} from "../get-chargeable-people.adapter.js";
 import {InfrastructureModule} from "../../infrastructure/configuration/insfrastructure.module.js";
+import {RegisterPublicPaymentPort} from "../../core/business/register-public-payment.port.js";
+import {RegisterPublicPaymentAdapter} from "../register-public-payment.adapter.js";
+import {ApprovePaymentPort} from "../../core/business/approve-payment.port.js";
+import {ApprovePaymentAdapter} from "../approve-payment.adapter.js";
+import {RejectPaymentPort} from "../../core/business/reject-payment.port.js";
+import {RejectPaymentAdapter} from "../reject-payment.adapter.js";
+import {ListPendingPaymentsPort} from "../../core/business/list-pending-payments.port.js";
+import {ListPendingPaymentsAdapter} from "../list-pending-payments.adapter.js";
+import {GetPixInfoPort} from "../../core/business/get-pix-info.port.js";
+import {GetPixInfoAdapter} from "../get-pix-info.adapter.js";
 
 @Module({
     imports: [
@@ -58,6 +68,11 @@ import {InfrastructureModule} from "../../infrastructure/configuration/insfrastr
         { provide: RemovePaymentPort, useClass: RemovePaymentAdapter },
         { provide: GetDashboardSummaryPort, useClass: GetDashboardSummaryAdapter },
         { provide: GetChargeablePeoplePort, useClass: GetChargeablePeopleAdapter },
+        { provide: RegisterPublicPaymentPort, useClass: RegisterPublicPaymentAdapter },
+        { provide: ApprovePaymentPort, useClass: ApprovePaymentAdapter },
+        { provide: RejectPaymentPort, useClass: RejectPaymentAdapter },
+        { provide: ListPendingPaymentsPort, useClass: ListPendingPaymentsAdapter },
+        { provide: GetPixInfoPort, useClass: GetPixInfoAdapter },
     ],
     exports: [
         CreateUserPort,
@@ -73,6 +88,11 @@ import {InfrastructureModule} from "../../infrastructure/configuration/insfrastr
         RemovePaymentPort,
         GetDashboardSummaryPort,
         GetChargeablePeoplePort,
+        RegisterPublicPaymentPort,
+        ApprovePaymentPort,
+        RejectPaymentPort,
+        ListPendingPaymentsPort,
+        GetPixInfoPort,
     ],
 })
 export class BusinessModule {}

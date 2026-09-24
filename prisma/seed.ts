@@ -7,14 +7,13 @@ const pool = new pg.Pool({connectionString: process.env.DATABASE_URL});
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({adapter});
 
-// Chaves conhecidas até agora. Cada dono de feature adiciona as suas aqui
-// (upsert por key evita conflito entre as duas frentes de trabalho).
-// IMPORTANTE: os valores abaixo são placeholders de desenvolvimento, não
-// os valores reais de cobrança. Ajustar via `PATCH /config` (ou aqui mesmo,
-// antes de rodar em produção) com os valores reais da turma.
+
 const configDefaults: {key: string; value: string}[] = [
     {key: 'monthly_fee', value: '0.00'},
     {key: 'billing_start_date', value: new Date().toISOString().slice(0, 10)},
+    {key: 'pix_key', value: ''},
+    {key: 'pix_receiver_name', value: ''},
+    {key: 'pix_receiver_city', value: ''},
 ];
 
 async function main() {

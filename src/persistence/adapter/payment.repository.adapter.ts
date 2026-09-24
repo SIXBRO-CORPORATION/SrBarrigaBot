@@ -3,6 +3,7 @@ import { PaymentRepositoryPort } from '../../core/persistence/payment.repository
 import { Payment } from '../../domain/payment.js';
 import { PrismaConfiguration } from '../configuration/prisma.configuration.js';
 import { PaymentMapper } from '../mapper/payment.mapper.js';
+import { PaymentStatus } from '../../domain/payment-status.js';
 
 @Injectable()
 export class PaymentRepositoryAdapter implements PaymentRepositoryPort {
@@ -29,6 +30,14 @@ export class PaymentRepositoryAdapter implements PaymentRepositoryPort {
         const entities = await this.prisma.payment.findMany({
             where: { studentId, deletedAt: null },
             orderBy: { paidAt: 'asc' },
+        });
+        return entities.map((e) => this.mapper.toDomain(e));
+    }
+
+    async findByStatus(status: PaymentStatus): Promise<Payment[]> {
+        const entities = await this.prisma.payment.findMany({
+            where: { status: status as any, deletedAt: null },
+            orderBy: { createdAt: 'asc' },
         });
         return entities.map((e) => this.mapper.toDomain(e));
     }

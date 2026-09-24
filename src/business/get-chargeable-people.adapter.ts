@@ -7,6 +7,7 @@ import {StudentRepositoryPort} from '../core/persistence/student.repository.port
 import {PaymentRepositoryPort} from '../core/persistence/payment.repository.port.js';
 import {SystemConfigRepositoryPort} from '../core/persistence/system-config.repository.port.js';
 import {calculateBilling} from '../domain/calculations/billing.calculator.js';
+import {PaymentStatus} from '../domain/payment-status.js';
 
 const MESES = [
     'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
@@ -45,7 +46,8 @@ export class GetChargeablePeopleAdapter implements GetChargeablePeoplePort {
                 continue;
             }
 
-            const payments = await this.paymentRepositoryPort.findByStudentId(student.id);
+            const payments = (await this.paymentRepositoryPort.findByStudentId(student.id))
+                .filter((payment) => payment.status === PaymentStatus.APPROVED);
             const paidAmount = payments.reduce((sum, payment) => sum + payment.amount, 0);
 
             const billing = calculateBilling({

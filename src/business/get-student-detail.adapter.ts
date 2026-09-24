@@ -7,6 +7,7 @@ import {StudentRepositoryPort} from '../core/persistence/student.repository.port
 import {PaymentRepositoryPort} from '../core/persistence/payment.repository.port.js';
 import {SystemConfigRepositoryPort} from '../core/persistence/system-config.repository.port.js';
 import {calculateBilling} from '../domain/calculations/billing.calculator.js';
+import {PaymentStatus} from '../domain/payment-status.js';
 
 @Injectable()
 export class GetStudentDetailAdapter implements GetStudentDetailPort {
@@ -41,9 +42,11 @@ export class GetStudentDetailAdapter implements GetStudentDetailPort {
         const monthlyFee = Number(monthlyFeeConfig.value);
         const billingStartDate = new Date(billingStartDateConfig.value);
         const today = new Date();
-
+        
         const payments = await this.paymentRepositoryPort.findByStudentId(student.id);
-        const paidAmount = payments.reduce((sum, payment) => sum + payment.amount, 0);
+        const paidAmount = payments
+            .filter((payment) => payment.status === PaymentStatus.APPROVED)
+            .reduce((sum, payment) => sum + payment.amount, 0);
         const referenceDate = student.inactivatedAt ?? today;
 
         const billing = calculateBilling({

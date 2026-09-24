@@ -9,13 +9,14 @@ import {StudentController} from "../controller/student.controller.js";
 import {ConfigController} from "../controller/config.controller.js";
 import {PaymentController} from "../controller/payment.controller.js";
 import {DashboardController} from "../controller/dashboard.controller.js";
+import {PublicController} from "../controller/public.controller.js";
 import {StudentMapper} from "../mapper/student.mapper.js";
 import {PaymentMapper} from "../mapper/payment.mapper.js";
 import {InfrastructureModule} from "../../infrastructure/configuration/insfrastructure.module.js";
 
 @Module({
     imports: [BusinessModule, SecurityModule, PersistenceModule, MessagingModule, InfrastructureModule],
-    controllers: [UserController, WhatsAppController, StudentController, ConfigController, PaymentController, DashboardController],
+    controllers: [UserController, WhatsAppController, StudentController, ConfigController, PaymentController, DashboardController, PublicController],
     providers: [StudentMapper, PaymentMapper],
 })
 export class WebModule {}

@@ -12,6 +12,10 @@ export class PaymentMapper {
         payment.paidAt = entity.paidAt;
         payment.note = entity.note;
         payment.receiptUrl = entity.receiptUrl;
+        payment.status = entity.status as any;
+        payment.approvedAt = entity.approvedAt;
+        payment.approvedBy = entity.approvedBy;
+        payment.rejectedReason = entity.rejectedReason;
         payment.createdAt = entity.createdAt;
         payment.modifiedAt = entity.modifiedAt;
         payment.deletedAt = entity.deletedAt;
@@ -26,6 +30,10 @@ export class PaymentMapper {
             paidAt: domain.paidAt,
             note: domain.note,
             receiptUrl: domain.receiptUrl,
+            status: domain.status as any,
+            approvedAt: domain.approvedAt,
+            approvedBy: domain.approvedBy,
+            rejectedReason: domain.rejectedReason,
             createdAt: domain.createdAt,
             modifiedAt: domain.modifiedAt,
             deletedAt: domain.deletedAt,

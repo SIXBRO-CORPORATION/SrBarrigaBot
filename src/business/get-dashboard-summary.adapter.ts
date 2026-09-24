@@ -8,6 +8,7 @@ import {PaymentRepositoryPort} from '../core/persistence/payment.repository.port
 import {SystemConfigRepositoryPort} from '../core/persistence/system-config.repository.port.js';
 import {calculateBilling} from '../domain/calculations/billing.calculator.js';
 import {round2} from '../domain/calculations/billing.calculator.js'
+import {PaymentStatus} from '../domain/payment-status.js';
 
 @Injectable()
 export class GetDashboardSummaryAdapter implements GetDashboardSummaryPort {
@@ -42,8 +43,9 @@ export class GetDashboardSummaryAdapter implements GetDashboardSummaryPort {
             if (student.active) {
                 alunosAtivos++;
             }
-
-            const payments = await this.paymentRepositoryPort.findByStudentId(student.id);
+            
+            const payments = (await this.paymentRepositoryPort.findByStudentId(student.id))
+                .filter((payment) => payment.status === PaymentStatus.APPROVED);
             const paidAmount = payments.reduce((sum, payment) => sum + payment.amount, 0);
             const referenceDate = student.inactivatedAt ?? today;
 

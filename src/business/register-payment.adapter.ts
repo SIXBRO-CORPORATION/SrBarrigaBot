@@ -7,6 +7,7 @@ import {PaymentRepositoryPort} from '../core/persistence/payment.repository.port
 import {StudentRepositoryPort} from '../core/persistence/student.repository.port.js';
 import {UploadFilePort} from '../core/infrastructure/upload-file.port.js';
 import {UploadFileInput} from '../domain/upload-file-input.js';
+import {PaymentStatus} from '../domain/payment-status.js';
 
 @Injectable()
 export class RegisterPaymentAdapter implements RegisterPaymentPort {
@@ -48,6 +49,9 @@ export class RegisterPaymentAdapter implements RegisterPaymentPort {
             fileInput.folder = `comprovantes/${student.id}`;
             receiptKey = await this.uploadFilePort.execute(new Context(fileInput));
         }
+        
+        const approvedBy = context.getProperty<string>('approvedBy', String);
+        const now = new Date();
 
         const newPayment = new Payment();
         newPayment.studentId = student.id;
@@ -55,8 +59,12 @@ export class RegisterPaymentAdapter implements RegisterPaymentPort {
         newPayment.paidAt = payment.paidAt;
         newPayment.note = payment.note?.trim() || null;
         newPayment.receiptUrl = receiptKey;
-        newPayment.createdAt = new Date();
-        newPayment.modifiedAt = new Date();
+        newPayment.status = PaymentStatus.APPROVED;
+        newPayment.approvedAt = now;
+        newPayment.approvedBy = approvedBy;
+        newPayment.rejectedReason = null;
+        newPayment.createdAt = now;
+        newPayment.modifiedAt = now;
 
         return await this.paymentRepositoryPort.save(newPayment);
     }
