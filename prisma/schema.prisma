@@ -10,19 +10,20 @@ datasource db {
 model User {
   id         String    @id @default(uuid())
   name       String
-  email      String    @unique
+  email      String
   password   String
   createdAt  DateTime  @default(now()) @map("created_at")
   modifiedAt DateTime  @updatedAt @map("modified_at")
   deletedAt  DateTime? @map("deleted_at")
 
+  @@unique([email, deletedAt])
   @@map("users")
 }
 
 model Student {
   id            String    @id @default(uuid())
   name          String
-  matricula     String    @unique
+  matricula     String
   phone         String
   active        Boolean   @default(true)
   inactivatedAt DateTime? @map("inactivated_at")
@@ -30,8 +31,9 @@ model Student {
   modifiedAt    DateTime  @updatedAt @map("modified_at")
   deletedAt     DateTime? @map("deleted_at")
 
-  payments      Payment[]
+  payments Payment[]
 
+  @@unique([matricula, deletedAt])
   @@map("students")
 }
 
