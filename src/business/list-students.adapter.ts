@@ -17,8 +17,9 @@ export class ListStudentsAdapter implements ListStudentsPort {
     ) {}
 
     async execute(_context: Context): Promise<StudentSummary[]> {
-        const monthlyFeeConfig = await this.systemConfigRepositoryPort.get('monthly_fee');
-        const billingStartDateConfig = await this.systemConfigRepositoryPort.get('billing_start_date');
+        const configs = await this.systemConfigRepositoryPort.findByKeys(['monthly_fee', 'billing_start_date']);
+        const monthlyFeeConfig = configs.get('monthly_fee');
+        const billingStartDateConfig = configs.get('billing_start_date');
 
         if (!monthlyFeeConfig || !billingStartDateConfig) {
             throw new BusinessException(
@@ -31,12 +32,14 @@ export class ListStudentsAdapter implements ListStudentsPort {
         const today = new Date();
 
         const students = await this.studentRepositoryPort.findAllActive();
+        const paidByStudent = await this.paymentRepositoryPort.sumApprovedGroupedByStudent(
+            students.map((student) => student.id),
+        );
 
         const summaries: StudentSummary[] = [];
 
         for (const student of students) {
-            const payments = await this.paymentRepositoryPort.findByStudentId(student.id);
-            const paidAmount = payments.reduce((sum, payment) => sum + payment.amount, 0);
+            const paidAmount = paidByStudent.get(student.id) ?? 0;
             const referenceDate = student.inactivatedAt ?? today;
 
             const billing = calculateBilling({

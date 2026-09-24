@@ -4,7 +4,7 @@ import {Payment} from '../../domain/payment.js';
 
 @Injectable()
 export class PaymentMapper {
-    toDomain(entity: PrismaPayment): Payment {
+    toDomain(entity: PrismaPayment & { student?: { name: string } | null }): Payment {
         const payment = new Payment();
         payment.id = entity.id;
         payment.studentId = entity.studentId;
@@ -19,6 +19,7 @@ export class PaymentMapper {
         payment.createdAt = entity.createdAt;
         payment.modifiedAt = entity.modifiedAt;
         payment.deletedAt = entity.deletedAt;
+        payment.studentName = entity.student?.name;
         return payment;
     }
 

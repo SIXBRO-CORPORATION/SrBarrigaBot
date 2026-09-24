@@ -27,10 +27,21 @@ export class StudentRepositoryAdapter implements StudentRepositoryPort {
 
     async findAllActive(): Promise<Student[]> {
         const entities = await this.prisma.student.findMany({
-            where: { deletedAt: null },
+            where: { deletedAt: null, active: true },
             orderBy: { name: 'asc' },
         });
         return entities.map((e) => this.mapper.toDomain(e));
+    }
+
+    async findAllIncludingDeleted(): Promise<Student[]> {
+        const entities = await this.prisma.student.findMany();
+        return entities.map((e) => this.mapper.toDomain(e));
+    }
+
+    async countActive(): Promise<number> {
+        return this.prisma.student.count({
+            where: { deletedAt: null, active: true },
+        });
     }
 
     async save(model: Student): Promise<Student> {

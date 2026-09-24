@@ -3,24 +3,16 @@ import {Payment} from '../../domain/payment.js';
 import {PaymentResponse} from '../model/response/payment.response.js';
 import {GetFileSignedUrlPort} from '../../core/infrastructure/get-file-signed-url.port.js';
 import {Context} from '../../core/context.js';
-import {StudentRepositoryPort} from '../../core/persistence/student.repository.port.js';
 
 @Injectable()
 export class PaymentMapper {
-    constructor(
-        private readonly getFileSignedUrlPort: GetFileSignedUrlPort,
-        private readonly studentRepositoryPort: StudentRepositoryPort,
-    ) {}
+    constructor(private readonly getFileSignedUrlPort: GetFileSignedUrlPort) {}
 
-    public async toResponse(payment: Payment, includeStudentName = false): Promise<PaymentResponse> {
-        const studentName = includeStudentName
-            ? (await this.studentRepositoryPort.get(payment.studentId))?.name
-            : undefined;
-
+    public async toResponse(payment: Payment): Promise<PaymentResponse> {
         return new PaymentResponse({
             id: payment.id,
             studentId: payment.studentId,
-            studentName,
+            studentName: payment.studentName,
             amount: payment.amount,
             paidAt: payment.paidAt,
             note: payment.note,

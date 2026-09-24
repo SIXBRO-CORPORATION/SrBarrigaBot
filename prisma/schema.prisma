@@ -61,6 +61,8 @@ model Payment {
   modifiedAt     DateTime      @updatedAt @map("modified_at")
   deletedAt      DateTime?     @map("deleted_at")
 
+  @@index([studentId, status])
+  @@index([status, paidAt])
   @@map("payments")
 }
 

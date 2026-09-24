@@ -3,6 +3,8 @@ import {Student} from '../../domain/student.js';
 
 export abstract class StudentRepositoryPort extends BaseRepositoryPort<Student> {
     abstract findAllActive(): Promise<Student[]>;
+    abstract findAllIncludingDeleted(): Promise<Student[]>;
+    abstract countActive(): Promise<number>;
     abstract findByMatricula(matricula: string): Promise<Student | null>;
     abstract existsByMatricula(matricula: string, excludeStudentId?: string): Promise<boolean>;
 }

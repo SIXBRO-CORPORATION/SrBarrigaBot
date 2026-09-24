@@ -22,10 +22,11 @@ export class RemoveStudentAdapter implements RemoveStudentPort {
             throw new BusinessException('Aluno não encontrado.');
         }
 
+        const now = new Date();
         existing.active = false;
-        existing.inactivatedAt = new Date();
-        const inactivated = await this.studentRepositoryPort.save(existing);
+        existing.inactivatedAt = now;
+        existing.deletedAt = now;
 
-        return await this.studentRepositoryPort.softDelete(inactivated);
+        return await this.studentRepositoryPort.save(existing);
     }
 }

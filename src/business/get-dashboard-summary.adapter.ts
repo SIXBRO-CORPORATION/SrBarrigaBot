@@ -8,7 +8,6 @@ import {PaymentRepositoryPort} from '../core/persistence/payment.repository.port
 import {SystemConfigRepositoryPort} from '../core/persistence/system-config.repository.port.js';
 import {calculateBilling} from '../domain/calculations/billing.calculator.js';
 import {round2} from '../domain/calculations/billing.calculator.js'
-import {PaymentStatus} from '../domain/payment-status.js';
 
 @Injectable()
 export class GetDashboardSummaryAdapter implements GetDashboardSummaryPort {
@@ -19,8 +18,9 @@ export class GetDashboardSummaryAdapter implements GetDashboardSummaryPort {
     ) {}
 
     async execute(_context: Context): Promise<DashboardSummary> {
-        const monthlyFeeConfig = await this.systemConfigRepositoryPort.get('monthly_fee');
-        const billingStartDateConfig = await this.systemConfigRepositoryPort.get('billing_start_date');
+        const configs = await this.systemConfigRepositoryPort.findByKeys(['monthly_fee', 'billing_start_date']);
+        const monthlyFeeConfig = configs.get('monthly_fee');
+        const billingStartDateConfig = configs.get('billing_start_date');
 
         if (!monthlyFeeConfig || !billingStartDateConfig) {
             throw new BusinessException(
@@ -32,39 +32,29 @@ export class GetDashboardSummaryAdapter implements GetDashboardSummaryPort {
         const billingStartDate = new Date(billingStartDateConfig.value);
         const today = new Date();
 
-        const allStudents = await this.studentRepositoryPort.findAll();
+        const monthStart = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), 1));
+        const nextMonthStart = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth() + 1, 1));
 
-        let alunosAtivos = 0;
+        const [alunosAtivos, allStudents, paidByStudent, arrecadadoNoMes] = await Promise.all([
+            this.studentRepositoryPort.countActive(),
+            this.studentRepositoryPort.findAllIncludingDeleted(),
+            this.paymentRepositoryPort.sumApprovedGroupedByStudent(),
+            this.paymentRepositoryPort.sumApprovedPaidBetween(monthStart, nextMonthStart),
+        ]);
+
         let valorEsperadoTotal = 0;
         let valorContribuidoTotal = 0;
-        let arrecadadoNoMes = 0;
 
         for (const student of allStudents) {
-            if (student.active) {
-                alunosAtivos++;
-            }
-            
-            const payments = (await this.paymentRepositoryPort.findByStudentId(student.id))
-                .filter((payment) => payment.status === PaymentStatus.APPROVED);
-            const paidAmount = payments.reduce((sum, payment) => sum + payment.amount, 0);
-            const referenceDate = student.inactivatedAt ?? today;
-
             const billing = calculateBilling({
                 monthlyFee,
                 billingStartDate,
-                referenceDate,
-                paidAmount,
+                referenceDate: student.inactivatedAt ?? today,
+                paidAmount: paidByStudent.get(student.id) ?? 0,
             });
 
             valorEsperadoTotal += billing.valorEsperadoAcumulado;
             valorContribuidoTotal += billing.valorPagoAcumulado;
-
-            for (const payment of payments) {
-                const paidAt = new Date(payment.paidAt);
-                if (paidAt.getUTCFullYear() === today.getUTCFullYear() && paidAt.getUTCMonth() === today.getUTCMonth()) {
-                    arrecadadoNoMes += payment.amount;
-                }
-            }
         }
 
         const summary = new DashboardSummary();

@@ -92,7 +92,7 @@ export class PaymentController {
     @HttpCode(HttpStatus.OK)
     async listPending(): Promise<ApiResponse<PaymentResponse[]>> {
         const payments = await this.listPendingPaymentsPort.execute(new Context());
-        const responses = await Promise.all(payments.map((p) => this.paymentMapper.toResponse(p, true)));
+        const responses = await Promise.all(payments.map((p) => this.paymentMapper.toResponse(p)));
 
         return ApiResponse.success(responses);
     }

@@ -11,4 +11,5 @@ export class Payment extends AbstractDomain {
     approvedAt: Date | null;
     approvedBy: string | null;
     rejectedReason: string | null;
+    studentName?: string;
 }

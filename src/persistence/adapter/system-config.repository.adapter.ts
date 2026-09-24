@@ -23,6 +23,13 @@ export class SystemConfigRepositoryAdapter implements SystemConfigRepositoryPort
         return entity ? this.mapper.toDomain(entity) : null;
     }
 
+    async findByKeys(keys: string[]): Promise<Map<string, SystemConfig>> {
+        const entities = await this.prisma.systemConfig.findMany({
+            where: { key: { in: keys } },
+        });
+        return new Map(entities.map((e) => [e.key, this.mapper.toDomain(e)]));
+    }
+
     async set(key: string, value: string): Promise<SystemConfig> {
         const entity = await this.prisma.systemConfig.upsert({
             where: { key },

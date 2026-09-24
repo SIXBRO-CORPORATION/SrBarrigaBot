@@ -7,7 +7,6 @@ import {StudentRepositoryPort} from '../core/persistence/student.repository.port
 import {PaymentRepositoryPort} from '../core/persistence/payment.repository.port.js';
 import {SystemConfigRepositoryPort} from '../core/persistence/system-config.repository.port.js';
 import {calculateBilling} from '../domain/calculations/billing.calculator.js';
-import {PaymentStatus} from '../domain/payment-status.js';
 
 @Injectable()
 export class GetStudentDetailAdapter implements GetStudentDetailPort {
@@ -30,8 +29,9 @@ export class GetStudentDetailAdapter implements GetStudentDetailPort {
             throw new BusinessException('Aluno não encontrado.');
         }
 
-        const monthlyFeeConfig = await this.systemConfigRepositoryPort.get('monthly_fee');
-        const billingStartDateConfig = await this.systemConfigRepositoryPort.get('billing_start_date');
+        const configs = await this.systemConfigRepositoryPort.findByKeys(['monthly_fee', 'billing_start_date']);
+        const monthlyFeeConfig = configs.get('monthly_fee');
+        const billingStartDateConfig = configs.get('billing_start_date');
 
         if (!monthlyFeeConfig || !billingStartDateConfig) {
             throw new BusinessException(
@@ -43,10 +43,10 @@ export class GetStudentDetailAdapter implements GetStudentDetailPort {
         const billingStartDate = new Date(billingStartDateConfig.value);
         const today = new Date();
         
-        const payments = await this.paymentRepositoryPort.findByStudentId(student.id);
-        const paidAmount = payments
-            .filter((payment) => payment.status === PaymentStatus.APPROVED)
-            .reduce((sum, payment) => sum + payment.amount, 0);
+        const [payments, paidAmount] = await Promise.all([
+            this.paymentRepositoryPort.findByStudentId(student.id),
+            this.paymentRepositoryPort.sumApprovedByStudentId(student.id),
+        ]);
         const referenceDate = student.inactivatedAt ?? today;
 
         const billing = calculateBilling({

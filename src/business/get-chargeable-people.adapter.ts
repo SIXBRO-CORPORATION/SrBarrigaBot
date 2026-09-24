@@ -7,7 +7,6 @@ import {StudentRepositoryPort} from '../core/persistence/student.repository.port
 import {PaymentRepositoryPort} from '../core/persistence/payment.repository.port.js';
 import {SystemConfigRepositoryPort} from '../core/persistence/system-config.repository.port.js';
 import {calculateBilling} from '../domain/calculations/billing.calculator.js';
-import {PaymentStatus} from '../domain/payment-status.js';
 
 const MESES = [
     'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
@@ -23,8 +22,9 @@ export class GetChargeablePeopleAdapter implements GetChargeablePeoplePort {
     ) {}
 
     async execute(_context: Context): Promise<ChargeablePerson[]> {
-        const monthlyFeeConfig = await this.systemConfigRepositoryPort.get('monthly_fee');
-        const billingStartDateConfig = await this.systemConfigRepositoryPort.get('billing_start_date');
+        const configs = await this.systemConfigRepositoryPort.findByKeys(['monthly_fee', 'billing_start_date']);
+        const monthlyFeeConfig = configs.get('monthly_fee');
+        const billingStartDateConfig = configs.get('billing_start_date');
 
         if (!monthlyFeeConfig || !billingStartDateConfig) {
             throw new BusinessException(
@@ -38,17 +38,14 @@ export class GetChargeablePeopleAdapter implements GetChargeablePeoplePort {
         const mesAtual = MESES[today.getMonth()];
 
         const students = await this.studentRepositoryPort.findAllActive();
+        const paidByStudent = await this.paymentRepositoryPort.sumApprovedGroupedByStudent(
+            students.map((student) => student.id),
+        );
 
         const people: ChargeablePerson[] = [];
 
         for (const student of students) {
-            if (!student.active) {
-                continue;
-            }
-
-            const payments = (await this.paymentRepositoryPort.findByStudentId(student.id))
-                .filter((payment) => payment.status === PaymentStatus.APPROVED);
-            const paidAmount = payments.reduce((sum, payment) => sum + payment.amount, 0);
+            const paidAmount = paidByStudent.get(student.id) ?? 0;
 
             const billing = calculateBilling({
                 monthlyFee,

@@ -11,9 +11,14 @@ export class GetPixInfoAdapter implements GetPixInfoPort {
     constructor(private readonly systemConfigRepositoryPort: SystemConfigRepositoryPort) {}
 
     async execute(_context: Context): Promise<PixInfo> {
-        const pixKeyConfig = await this.systemConfigRepositoryPort.get('pix_key');
-        const receiverNameConfig = await this.systemConfigRepositoryPort.get('pix_receiver_name');
-        const receiverCityConfig = await this.systemConfigRepositoryPort.get('pix_receiver_city');
+        const configs = await this.systemConfigRepositoryPort.findByKeys([
+            'pix_key',
+            'pix_receiver_name',
+            'pix_receiver_city',
+        ]);
+        const pixKeyConfig = configs.get('pix_key');
+        const receiverNameConfig = configs.get('pix_receiver_name');
+        const receiverCityConfig = configs.get('pix_receiver_city');
 
         if (!pixKeyConfig?.value || !receiverNameConfig?.value || !receiverCityConfig?.value) {
             throw new BusinessException(
