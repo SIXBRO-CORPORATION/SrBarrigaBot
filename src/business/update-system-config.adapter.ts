@@ -20,6 +20,13 @@ export class UpdateSystemConfigAdapter implements UpdateSystemConfigPort {
             throw new BusinessException('Por favor, informe o valor da configuração.');
         }
 
-        return await this.systemConfigRepositoryPort.set(config.key.trim(), config.value.trim());
+        const key = config.key.trim();
+        const existing = await this.systemConfigRepositoryPort.get(key);
+
+        if (!existing) {
+            throw new BusinessException('Chave de configuração inválida. Não é possível cadastrar novas configurações por aqui.');
+        }
+
+        return await this.systemConfigRepositoryPort.set(key, config.value.trim());
     }
 }
