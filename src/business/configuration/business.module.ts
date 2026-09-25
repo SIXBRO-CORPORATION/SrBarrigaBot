@@ -1,5 +1,13 @@
 import {Module} from '@nestjs/common';
 import {CreateUserAdapter} from '../create-user.adapter.js';
+import {ListUsersPort} from "../../core/business/list-users.port.js";
+import {ListUsersAdapter} from "../list-users.adapter.js";
+import {GetUserPort} from "../../core/business/get-user.port.js";
+import {GetUserAdapter} from "../get-user.adapter.js";
+import {UpdateUserPort} from "../../core/business/update-user.port.js";
+import {UpdateUserAdapter} from "../update-user.adapter.js";
+import {RemoveUserPort} from "../../core/business/remove-user.port.js";
+import {RemoveUserAdapter} from "../remove-user.adapter.js";
 import {PersistenceModule} from '../../persistence/configuration/persistence.module.js';
 import {SecurityModule} from '../../security/configuration/security.module.js';
 import {CreateUserPort} from "../../core/business/create-user.port.js";
@@ -53,6 +61,10 @@ import {GetPixInfoAdapter} from "../get-pix-info.adapter.js";
     providers: [
         ChargeScheduler,
         { provide: CreateUserPort, useClass: CreateUserAdapter },
+        { provide: ListUsersPort, useClass: ListUsersAdapter },
+        { provide: GetUserPort, useClass: GetUserAdapter },
+        { provide: UpdateUserPort, useClass: UpdateUserAdapter },
+        { provide: RemoveUserPort, useClass: RemoveUserAdapter },
         { provide: ExecuteChargePort, useClass: ExecuteChargeAdapter },
         {
             provide: SendWhatsAppMessagePort,
@@ -76,6 +88,10 @@ import {GetPixInfoAdapter} from "../get-pix-info.adapter.js";
     ],
     exports: [
         CreateUserPort,
+        ListUsersPort,
+        GetUserPort,
+        UpdateUserPort,
+        RemoveUserPort,
         ExecuteChargePort,
         SendWhatsAppMessagePort,
         CreateStudentPort,

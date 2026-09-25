@@ -57,9 +57,13 @@ export class UserRepositoryAdapter implements UserRepositoryPort {
         return entity ? this.mapper.toDomain(entity) : null;
     }
 
-    async existsByEmail(email: string): Promise<boolean> {
+    async existsByEmail(email: string, excludeUserId?: string): Promise<boolean> {
         const count = await this.prisma.user.count({
-            where: { email, deletedAt: null },
+            where: {
+                email,
+                deletedAt: null,
+                ...(excludeUserId ? { id: { not: excludeUserId } } : {}),
+            },
         });
         return count > 0;
     }
