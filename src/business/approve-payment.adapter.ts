@@ -24,7 +24,7 @@ export class ApprovePaymentAdapter implements ApprovePaymentPort {
         }
 
         if (existing.status !== PaymentStatus.PENDING_APPROVAL) {
-            throw new BusinessException('Esse pagamento já foi analisado e não está mais pendente.');
+            throw new BusinessException('Esse pagamento já foi analisado e não está mais pendente');
         }
 
         const approvedBy = context.getProperty<string>('approvedBy', String);
