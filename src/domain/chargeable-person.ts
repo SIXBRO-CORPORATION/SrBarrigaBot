@@ -5,6 +5,7 @@ export class ChargeablePerson {
     telefone: string;
     mesAtual: string;
     valorAtraso: number;
+    saldo: number;
     mensalidade: number;
     statusMesAtual: MonthStatus;
 }

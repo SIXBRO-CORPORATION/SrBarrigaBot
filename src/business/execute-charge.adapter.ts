@@ -97,6 +97,7 @@ export class ExecuteChargeAdapter implements ExecuteChargePort {
             nome: pessoa.nome,
             mes: pessoa.mesAtual,
             valor_atraso: formatBRL(pessoa.valorAtraso),
+            saldo: formatBRL(pessoa.saldo),
             mensalidade: formatBRL(pessoa.mensalidade),
         });
     }

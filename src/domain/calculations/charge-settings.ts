@@ -1,4 +1,4 @@
-export const CHARGE_VARIABLES = ['nome', 'mes', 'valor_atraso', 'mensalidade'] as const;
+export const CHARGE_VARIABLES = ['nome', 'mes', 'valor_atraso', 'saldo', 'mensalidade'] as const;
 
 export type ChargeVariable = (typeof CHARGE_VARIABLES)[number];
 
@@ -9,7 +9,7 @@ export function renderChargeMessage(template: string, vars: Record<ChargeVariabl
 }
 
 export function formatBRL(value: number): string {
-    return value.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    return (value || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
 }
 
 export function chargeCron(day: string, time: string): string {
