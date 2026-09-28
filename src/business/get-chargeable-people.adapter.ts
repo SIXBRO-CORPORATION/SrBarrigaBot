@@ -54,6 +54,7 @@ export class GetChargeablePeopleAdapter implements GetChargeablePeoplePort {
             person.telefone = student.phone;
             person.mesAtual = mesAtual;
             person.valorAtraso = billing.valorAtraso;
+            person.mensalidade = monthlyFee;
             person.statusMesAtual = mesAtualStatus.status;
 
             people.push(person);

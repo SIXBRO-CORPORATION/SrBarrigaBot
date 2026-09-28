@@ -3,9 +3,6 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 export const config = {
-    cron: {
-        schedule: process.env.CRON_SCHEDULE || '40 8 1 * *', // Dia 01 às 08:40
-    },
     corsOrigins: (process.env.CORS_ORIGINS || 'http://localhost:3000,https://srbarrigabot.vercel.app,https://srbarrigabotcomputaria.vercel.app').split(',').map((o) => o.trim()),
     r2: {
         accountId: process.env.R2_ACCOUNT_ID,

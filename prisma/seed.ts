@@ -14,6 +14,10 @@ const configDefaults: {key: string; value: string}[] = [
     {key: 'pix_key', value: ''},
     {key: 'pix_receiver_name', value: ''},
     {key: 'pix_receiver_city', value: ''},
+    {key: 'charge_day', value: ''},
+    {key: 'charge_time', value: ''},
+    {key: 'charge_message_ok', value: ''},
+    {key: 'charge_message_pending', value: ''},
 ];
 
 async function main() {

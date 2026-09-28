@@ -6,6 +6,13 @@ import {SendWhatsAppMessagePort} from '../core/business/send-whatsapp-message.po
 import {ChargeablePerson} from '../domain/chargeable-person.js';
 import {ChargeProgressPort} from '../core/messaging/charge-progress.port.js';
 import {BusinessException} from '../domain/exceptions/business.exception.js';
+import {SystemConfigRepositoryPort} from '../core/persistence/system-config.repository.port.js';
+import {formatBRL, renderChargeMessage} from '../domain/calculations/charge-settings.js';
+
+interface ChargeTemplates {
+    ok: string;
+    pending: string;
+}
 
 @Injectable()
 export class ExecuteChargeAdapter implements ExecuteChargePort {
@@ -13,6 +20,7 @@ export class ExecuteChargeAdapter implements ExecuteChargePort {
         private readonly getChargeablePeoplePort: GetChargeablePeoplePort,
         private readonly sendWhatsAppMessagePort: SendWhatsAppMessagePort,
         private readonly chargeProgressPort: ChargeProgressPort,
+        private readonly systemConfigRepositoryPort: SystemConfigRepositoryPort,
     ) {}
 
     async execute(context: Context): Promise<void> {
@@ -22,6 +30,8 @@ export class ExecuteChargeAdapter implements ExecuteChargePort {
         }
 
         try {
+            const templates = await this.loadTemplates();
+
             console.log('Buscando alunos a cobrar...');
 
             const contextPessoas = new Context();
@@ -41,7 +51,7 @@ export class ExecuteChargeAdapter implements ExecuteChargePort {
                 const pessoa = pessoas[i];
 
                 try {
-                    const mensagem = this.criarMensagem(pessoa);
+                    const mensagem = this.criarMensagem(pessoa, templates);
 
                     const contextMessage = new Context();
                     contextMessage.putProperty('number', pessoa.telefone);
@@ -70,30 +80,25 @@ export class ExecuteChargeAdapter implements ExecuteChargePort {
         }
     }
 
-    private criarMensagem(pessoa: ChargeablePerson): string {
-        if (pessoa.statusMesAtual === 'OK') {
-            return `Olá ${pessoa.nome}! 👋
+    private async loadTemplates(): Promise<ChargeTemplates> {
+        const configs = await this.systemConfigRepositoryPort.findByKeys(['charge_message_ok', 'charge_message_pending']);
+        const ok = configs.get('charge_message_ok')?.value;
+        const pending = configs.get('charge_message_pending')?.value;
 
-Este é um lembrete automático sobre o pagamento referente ao mês de *${pessoa.mesAtual}*.
-
-Você está em dia com as mensalidades até agora, valeu! 🙌
-
-Qualquer dúvida, estou à disposição! 😊`;
+        if (!ok || !pending) {
+            throw new BusinessException('Configure os textos da mensagem de cobrança em /config antes de disparar a cobrança.');
         }
 
-        const avisoAtraso = pessoa.valorAtraso > 0
-            ? `\n\nSeu saldo em atraso atual é de *R$ ${pessoa.valorAtraso.toFixed(2)}*.`
-            : '';
+        return {ok, pending};
+    }
 
-        return `Olá ${pessoa.nome}! 👋
-
-Este é um lembrete automático sobre o pagamento referente ao mês de *${pessoa.mesAtual}*.
-
-Por favor, realize o pagamento até o dia 10 deste mês.${avisoAtraso}
-
-Caso já tenha pago, desconsidere esta mensagem.
-
-Qualquer dúvida, estou à disposição! 😊`;
+    private criarMensagem(pessoa: ChargeablePerson, templates: ChargeTemplates): string {
+        return renderChargeMessage(pessoa.statusMesAtual === 'OK' ? templates.ok : templates.pending, {
+            nome: pessoa.nome,
+            mes: pessoa.mesAtual,
+            valor_atraso: formatBRL(pessoa.valorAtraso),
+            mensalidade: formatBRL(pessoa.mensalidade),
+        });
     }
 
     private sleep(ms: number): Promise<void> {
