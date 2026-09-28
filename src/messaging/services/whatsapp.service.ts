@@ -1,6 +1,5 @@
 import {Injectable, OnModuleDestroy} from '@nestjs/common';
 import makeWASocket, {DisconnectReason, useMultiFileAuthState, fetchLatestBaileysVersion} from '@whiskeysockets/baileys';
-import {Boom} from '@hapi/boom';
 import {join, dirname} from 'path';
 import {fileURLToPath} from 'url';
 import {EventEmitter} from 'events';
@@ -58,7 +57,7 @@ export class WhatsAppService extends EventEmitter implements OnModuleDestroy {
                 }
 
                 if (connection === 'close') {
-                    const shouldReconnect = (lastDisconnect?.error as Boom)?.output?.statusCode !== DisconnectReason.loggedOut;
+                    const shouldReconnect = (lastDisconnect?.error as any)?.output?.statusCode !== DisconnectReason.loggedOut;
 
                     if (shouldReconnect) {
                         this._isConnected = false;

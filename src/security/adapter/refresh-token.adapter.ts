@@ -20,12 +20,8 @@ export class RefreshTokenAdapter implements RefreshTokenPort {
         }
 
         try {
-            const username = this.jwtUtil.extractUsername(refreshToken);
-            const userDetails = await this.userDetailsService.loadUserByUsername(username);
-
-            if (!this.jwtUtil.isTokenValid(refreshToken, userDetails)) {
-                throw new UnauthorizedException('Invalid refresh token');
-            }
+            const {sub} = this.jwtUtil.verify(refreshToken, 'refresh');
+            const userDetails = await this.userDetailsService.loadUserByUsername(sub);
 
             const newAccessToken = this.jwtUtil.generateAccessToken(userDetails);
             const newRefreshToken = this.jwtUtil.generateRefreshToken(userDetails);

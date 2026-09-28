@@ -2,60 +2,40 @@ import {Injectable} from '@nestjs/common';
 import jwt from 'jsonwebtoken';
 import {CustomUserDetails} from '../model/custom-user-details.js';
 
+export type TokenType = 'access' | 'refresh';
+
 @Injectable()
 export class JwtUtil {
     private readonly jwtSecret: string;
-    private readonly accessTokenExpirationMs = 86400000; // 24 horas
-    private readonly refreshTokenExpirationMs = 604800000; // 7 dias
 
     constructor() {
-        this.jwtSecret = process.env.JWT_SECRET || 'default-secret-key';
+        if (!process.env.JWT_SECRET) {
+            throw new Error('JWT_SECRET não configurado no .env');
+        }
+        this.jwtSecret = process.env.JWT_SECRET;
     }
 
     generateAccessToken(userDetails: CustomUserDetails): string {
-        const payload = {
-            sub: userDetails.username,
-            userId: userDetails.userId,
-        };
-
-        return jwt.sign(payload, this.jwtSecret, {
-            expiresIn: this.accessTokenExpirationMs,
-        });
+        return this.sign(userDetails, 'access', '24h');
     }
 
     generateRefreshToken(userDetails: CustomUserDetails): string {
-        const payload = {
-            sub: userDetails.username,
-            userId: userDetails.userId,
-        };
-
-        return jwt.sign(payload, this.jwtSecret, {
-            expiresIn: this.refreshTokenExpirationMs,
-        });
+        return this.sign(userDetails, 'refresh', '7d');
     }
 
-    extractUsername(token: string): string {
+    verify(token: string, type: TokenType): {sub: string; userId: string} {
         const decoded = jwt.verify(token, this.jwtSecret) as any;
-        return decoded.sub;
-    }
-
-    extractUserId(token: string): string {
-        const decoded = jwt.verify(token, this.jwtSecret) as any;
-        return decoded.userId;
-    }
-
-    isTokenValid(token: string, userDetails: CustomUserDetails): boolean {
-        try {
-            const username = this.extractUsername(token);
-            return username === userDetails.username && !this.isTokenExpired(token);
-        } catch (error) {
-            return false;
+        if (decoded.typ !== type) {
+            throw new Error('Tipo de token inválido');
         }
+        return decoded;
     }
 
-    private isTokenExpired(token: string): boolean {
-        const decoded = jwt.verify(token, this.jwtSecret) as any;
-        const expiration = new Date(decoded.exp * 1000);
-        return expiration < new Date();
+    private sign(userDetails: CustomUserDetails, typ: TokenType, expiresIn: '24h' | '7d'): string {
+        return jwt.sign(
+            {sub: userDetails.username, userId: userDetails.userId, typ},
+            this.jwtSecret,
+            {expiresIn},
+        );
     }
 }

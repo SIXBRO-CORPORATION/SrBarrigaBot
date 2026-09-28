@@ -1,15 +1,14 @@
-import {BadRequestException, Body, Controller, Get, HttpCode, HttpStatus, Post, UploadedFile, UseInterceptors} from '@nestjs/common';
-import {FileInterceptor} from '@nestjs/platform-express';
+import {Body, Controller, Get, HttpCode, HttpStatus, Post, UploadedFile, UseInterceptors} from '@nestjs/common';
+import {Throttle} from '@nestjs/throttler';
 import {RegisterPublicPaymentPort} from '../../core/business/register-public-payment.port.js';
 import {GetPixInfoPort} from '../../core/business/get-pix-info.port.js';
 import {Context} from '../../core/context.js';
-import {UploadFileInput} from '../../domain/upload-file-input.js';
-import {ALLOWED_RECEIPT_MIME_TYPES, MAX_RECEIPT_FILE_SIZE_BYTES} from '../../domain/upload-file.constants.js';
 import {ApiResponse} from '../commons/api.response.js';
 import {PublicPaymentRequest} from '../model/request/public-payment.request.js';
 import {PaymentResponse} from '../model/response/payment.response.js';
 import {PixInfoResponse} from '../model/response/pix-info.response.js';
 import {PaymentMapper} from '../mapper/payment.mapper.js';
+import {receiptFileInterceptor, toUploadFileInput} from '../commons/receipt-file.interceptor.js';
 
 
 @Controller('public')
@@ -37,23 +36,8 @@ export class PublicController {
 
     @Post('payments')
     @HttpCode(HttpStatus.CREATED)
-    @UseInterceptors(
-        FileInterceptor('comprovante', {
-            limits: {fileSize: MAX_RECEIPT_FILE_SIZE_BYTES},
-            fileFilter: (_req, file, callback) => {
-                if (!ALLOWED_RECEIPT_MIME_TYPES.includes(file.mimetype)) {
-                    callback(
-                        new BadRequestException(
-                            'Formato de comprovante não suportado. Envie uma imagem (JPG, PNG, WEBP) ou um PDF.',
-                        ),
-                        false,
-                    );
-                    return;
-                }
-                callback(null, true);
-            },
-        }),
-    )
+    @Throttle({default: {limit: 10, ttl: 60_000}})
+    @UseInterceptors(receiptFileInterceptor)
     async register(
         @Body() request: PublicPaymentRequest,
         @UploadedFile() comprovante?: Express.Multer.File,
@@ -65,11 +49,7 @@ export class PublicController {
         context.putProperty('note', request.note ?? null);
 
         if (comprovante) {
-            const fileInput = new UploadFileInput();
-            fileInput.buffer = comprovante.buffer;
-            fileInput.originalName = comprovante.originalname;
-            fileInput.mimeType = comprovante.mimetype;
-            context.putProperty('file', fileInput);
+            context.putProperty('file', toUploadFileInput(comprovante));
         }
 
         const saved = await this.registerPublicPaymentPort.execute(context);

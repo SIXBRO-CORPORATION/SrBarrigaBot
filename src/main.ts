@@ -4,6 +4,7 @@ import {AppModule} from './app.module.js';
 import {GlobalExceptionFilter} from "./web/commons/global.exception.filter.js";
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import * as dotenv from 'dotenv';
+import {config as appConfig} from './security/configuration/env.js';
 
 dotenv.config();
 
@@ -11,6 +12,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   app.setGlobalPrefix('api');
+  app.getHttpAdapter().getInstance().set('trust proxy', 1);
 
   const config = new DocumentBuilder()
       .setTitle("Sr. Barriga Bot API")
@@ -29,7 +31,7 @@ async function bootstrap() {
         transform: true,
   }));
   app.enableCors({
-        origin: ['http://localhost:3000', 'https://srbarrigabot.vercel.app'],
+        origin: appConfig.corsOrigins,
         methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
         credentials: true,
   });

@@ -23,17 +23,11 @@ export class JwtAuthGuard implements CanActivate {
         }
 
         try {
-            const username = this.jwtUtil.extractUsername(token);
-            const userId = this.jwtUtil.extractUserId(token);
-
-            const userDetails = await this.userDetailsService.loadUserByUsername(username);
-
-            if (!this.jwtUtil.isTokenValid(token, userDetails)) {
-                throw new UnauthorizedException('Token inválido');
-            }
+            const {sub} = this.jwtUtil.verify(token, 'access');
+            const userDetails = await this.userDetailsService.loadUserByUsername(sub);
 
             request.user = {
-                id: userId,
+                id: userDetails.userId,
                 email: userDetails.username,
             };
 

@@ -1,4 +1,5 @@
 import {Body, Controller, HttpCode, HttpStatus, Post} from "@nestjs/common";
+import {Throttle} from "@nestjs/throttler";
 import {CreateTokenPort} from "../../core/security/create-token.port.js";
 import {RefreshTokenPort} from "../../core/security/refresh-token.port.js";
 import {AuthRequest} from "../model/auth.request.js";
@@ -17,6 +18,7 @@ export class AuthController {
     ) {}
 
     @Post('login')
+    @Throttle({default: {limit: 5, ttl: 60_000}})
     @HttpCode(HttpStatus.OK)
     async login(@Body() authRequest: AuthRequest): Promise<ApiResponse<JwtResponse>> {
         const context = new Context();
@@ -39,7 +41,7 @@ export class AuthController {
     @HttpCode(HttpStatus.OK)
     async refresh(@Body() refreshTokenRequest: RefreshTokenRequest): Promise<ApiResponse<JwtResponse>> {
         const context = new Context();
-        context.putProperty("refresh_token", refreshTokenRequest.refresh_token);
+        context.putProperty("refreshToken", refreshTokenRequest.refresh_token);
 
         const jwt: Jwt = await this.refreshTokenPort.execute(context);
 

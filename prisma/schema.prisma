@@ -16,7 +16,6 @@ model User {
   modifiedAt DateTime  @updatedAt @map("modified_at")
   deletedAt  DateTime? @map("deleted_at")
 
-  @@unique([email, deletedAt])
   @@map("users")
 }
 
@@ -33,7 +32,6 @@ model Student {
 
   payments Payment[]
 
-  @@unique([matricula, deletedAt])
   @@map("students")
 }
 

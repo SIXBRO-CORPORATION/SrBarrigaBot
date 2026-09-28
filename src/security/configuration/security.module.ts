@@ -1,7 +1,6 @@
 import {Module} from '@nestjs/common';
 import {JwtUtil} from '../utils/jwt.util.js';
 import {CustomUserDetailsService} from '../services/custom-user-details.service.js';
-import {EncryptionService} from '../services/encryption.service.js';
 import {CreateTokenAdapter} from '../adapter/create-token.adapter.js';
 import {RefreshTokenAdapter} from '../adapter/refresh-token.adapter.js';
 import {JwtAuthGuard} from '../guards/jwt-auth.guard.js';
@@ -16,7 +15,6 @@ import {RefreshTokenPort} from "../../core/security/refresh-token.port.js";
     providers: [
         JwtUtil,
         CustomUserDetailsService,
-        EncryptionService,
         JwtAuthGuard,
         { provide: CreateTokenPort, useClass: CreateTokenAdapter },
         { provide: RefreshTokenPort, useClass: RefreshTokenAdapter },
@@ -24,7 +22,6 @@ import {RefreshTokenPort} from "../../core/security/refresh-token.port.js";
     exports: [
         JwtUtil,
         CustomUserDetailsService,
-        EncryptionService,
         JwtAuthGuard,
         CreateTokenPort,
         RefreshTokenPort,

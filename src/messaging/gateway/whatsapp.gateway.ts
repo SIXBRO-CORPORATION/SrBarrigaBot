@@ -7,15 +7,18 @@ import {
     OnGatewayInit,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { Injectable, UseGuards } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+import { SkipThrottle } from '@nestjs/throttler';
 import { WhatsAppService } from '../services/whatsapp.service.js';
-import { WsJwtGuard } from '../../security/guards/ws-jwt.guard.js';
+import { JwtUtil } from '../../security/utils/jwt.util.js';
+import { config } from '../../security/configuration/env.js';
 import { ChargeProgressPort } from '../../core/messaging/charge-progress.port.js';
 
 @Injectable()
+@SkipThrottle()
 @WebSocketGateway({
     cors: {
-        origin: ['http://localhost:3000', 'https://srbarrigabotcomputaria.vercel.app'],
+        origin: config.corsOrigins,
         credentials: true,
     },
     namespace: '/whatsapp',
@@ -27,6 +30,7 @@ export class WhatsAppGateway implements OnGatewayInit, OnGatewayConnection, OnGa
     constructor(
         private readonly whatsappService: WhatsAppService,
         private readonly chargeProgressPort: ChargeProgressPort,
+        private readonly jwtUtil: JwtUtil,
     ) {}
 
     afterInit(server: Server) {
@@ -63,6 +67,17 @@ export class WhatsAppGateway implements OnGatewayInit, OnGatewayConnection, OnGa
     }
 
     async handleConnection(client: Socket) {
+        const authHeader = client.handshake.headers.authorization;
+        const token = client.handshake.auth?.token
+            ?? (authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : undefined);
+
+        try {
+            this.jwtUtil.verify(token, 'access');
+        } catch {
+            client.disconnect(true);
+            return;
+        }
+
         console.log(`Client connected: ${client.id}`);
 
         const status = {
@@ -87,7 +102,6 @@ export class WhatsAppGateway implements OnGatewayInit, OnGatewayConnection, OnGa
         console.log(`Client disconnected: ${client.id}`);
     }
 
-    @UseGuards(WsJwtGuard)
     @SubscribeMessage('whatsapp:connect')
     async handleConnect(client: Socket) {
         try {
@@ -99,7 +113,6 @@ export class WhatsAppGateway implements OnGatewayInit, OnGatewayConnection, OnGa
         }
     }
 
-    @UseGuards(WsJwtGuard)
     @SubscribeMessage('whatsapp:disconnect')
     async handleDisconnect2(client: Socket) {
         try {
@@ -111,7 +124,6 @@ export class WhatsAppGateway implements OnGatewayInit, OnGatewayConnection, OnGa
         }
     }
 
-    @UseGuards(WsJwtGuard)
     @SubscribeMessage('whatsapp:get-status')
     async handleGetStatus(client: Socket) {
         return {

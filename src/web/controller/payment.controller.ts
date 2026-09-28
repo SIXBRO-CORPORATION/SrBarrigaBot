@@ -1,5 +1,4 @@
-import {BadRequestException, Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Patch, Post, Req, UploadedFile, UseGuards, UseInterceptors} from '@nestjs/common';
-import {FileInterceptor} from '@nestjs/platform-express';
+import {Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Patch, Post, Req, UploadedFile, UseGuards, UseInterceptors} from '@nestjs/common';
 import {RegisterPaymentPort} from '../../core/business/register-payment.port.js';
 import {RemovePaymentPort} from '../../core/business/remove-payment.port.js';
 import {ApprovePaymentPort} from '../../core/business/approve-payment.port.js';
@@ -8,30 +7,13 @@ import {ListPendingPaymentsPort} from '../../core/business/list-pending-payments
 import {PaymentRepositoryPort} from '../../core/persistence/payment.repository.port.js';
 import {Context} from '../../core/context.js';
 import {Payment} from '../../domain/payment.js';
-import {UploadFileInput} from '../../domain/upload-file-input.js';
-import {ALLOWED_RECEIPT_MIME_TYPES, MAX_RECEIPT_FILE_SIZE_BYTES} from '../../domain/upload-file.constants.js';
 import {ApiResponse} from '../commons/api.response.js';
 import {PaymentRequest} from '../model/request/payment.request.js';
 import {RejectPaymentRequest} from '../model/request/reject-payment.request.js';
 import {PaymentResponse} from '../model/response/payment.response.js';
 import {JwtAuthGuard} from '../../security/guards/jwt-auth.guard.js';
 import {PaymentMapper} from '../mapper/payment.mapper.js';
-
-const receiptFileInterceptor = FileInterceptor('comprovante', {
-    limits: {fileSize: MAX_RECEIPT_FILE_SIZE_BYTES},
-    fileFilter: (_req, file, callback) => {
-        if (!ALLOWED_RECEIPT_MIME_TYPES.includes(file.mimetype)) {
-            callback(
-                new BadRequestException(
-                    'Formato de comprovante não suportado. Envie uma imagem (JPG, PNG, WEBP) ou um PDF.',
-                ),
-                false,
-            );
-            return;
-        }
-        callback(null, true);
-    },
-});
+import {receiptFileInterceptor, toUploadFileInput} from '../commons/receipt-file.interceptor.js';
 
 @Controller()
 @UseGuards(JwtAuthGuard)
@@ -66,12 +48,7 @@ export class PaymentController {
         context.putProperty('approvedBy', req.user?.id ?? null);
 
         if (comprovante) {
-            const fileInput = new UploadFileInput();
-            fileInput.buffer = comprovante.buffer;
-            fileInput.originalName = comprovante.originalname;
-            fileInput.mimeType = comprovante.mimetype;
-            fileInput.folder = `comprovantes/${studentId}`;
-            context.putProperty('file', fileInput);
+            context.putProperty('file', toUploadFileInput(comprovante));
         }
 
         const saved = await this.registerPaymentPort.execute(context);

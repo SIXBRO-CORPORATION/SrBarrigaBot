@@ -34,7 +34,7 @@ export class R2UploadFileAdapter implements UploadFilePort {
             throw new BusinessException('O comprovante deve ter no máximo 10MB.');
         }
 
-        const key = `${input.folder}/${randomUUID()}${this.resolveExtension(input)}`;
+        const key = `${input.folder}/${randomUUID()}${EXTENSION_BY_MIME_TYPE[input.mimeType]}`;
 
         await this.r2ClientService.client.send(
             new PutObjectCommand({
@@ -46,13 +46,5 @@ export class R2UploadFileAdapter implements UploadFilePort {
         );
 
         return key;
-    }
-
-    private resolveExtension(input: UploadFileInput): string {
-        const fromOriginalName = input.originalName?.includes('.')
-            ? input.originalName.slice(input.originalName.lastIndexOf('.')).toLowerCase()
-            : '';
-
-        return fromOriginalName || EXTENSION_BY_MIME_TYPE[input.mimeType] || '';
     }
 }
