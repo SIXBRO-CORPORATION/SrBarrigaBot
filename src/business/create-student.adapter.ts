@@ -10,44 +10,46 @@ export class CreateStudentAdapter implements CreateStudentPort {
     constructor(private readonly studentRepositoryPort: StudentRepositoryPort) {}
 
     async execute(context: Context): Promise<Student> {
-        const student = context.getData(Student);
+        const data = context.getData(Student);
 
-        if (!student) {
+        if (!data) {
             throw new BusinessException('Por favor, informe os dados do aluno.');
         }
 
-        if (!student.name || student.name.trim() === '') {
+        if (!data.name || data.name.trim() === '') {
             throw new BusinessException('Por favor, informe o nome do aluno.');
         }
 
-        if (!student.matricula || student.matricula.trim() === '') {
+        if (!data.matricula || data.matricula.trim() === '') {
             throw new BusinessException('Por favor, informe a matrícula do aluno.');
         }
 
-        const matricula = student.matricula.trim();
+        const matricula = data.matricula.trim();
 
         if (!/^[0-9]+$/.test(matricula)) {
             throw new BusinessException('A matrícula deve conter apenas números.');
         }
 
-        if (!student.phone || student.phone.trim() === '') {
+        if (!data.phone || data.phone.trim() === '') {
             throw new BusinessException('Por favor, informe o telefone do aluno.');
         }
 
-        const matriculaExists = await this.studentRepositoryPort.existsByMatricula(matricula);
-        if (matriculaExists) {
+        const existing = await this.studentRepositoryPort.findByMatriculaIncludingDeleted(matricula);
+        if (existing && !existing.deletedAt) {
             throw new BusinessException('Já existe um aluno com essa matrícula.');
         }
 
-        const newStudent = new Student();
-        newStudent.name = student.name.trim();
-        newStudent.matricula = matricula;
-        newStudent.phone = student.phone.trim();
-        newStudent.active = true;
-        newStudent.inactivatedAt = null;
-        newStudent.createdAt = new Date();
-        newStudent.modifiedAt = new Date();
+        const now = new Date();
+        const student = existing ?? new Student();
+        student.name = data.name.trim();
+        student.matricula = matricula;
+        student.phone = data.phone.trim();
+        student.active = true;
+        student.inactivatedAt = null;
+        student.deletedAt = null;
+        student.createdAt ??= now;
+        student.modifiedAt = now;
 
-        return await this.studentRepositoryPort.save(newStudent);
+        return await this.studentRepositoryPort.save(student);
     }
 }

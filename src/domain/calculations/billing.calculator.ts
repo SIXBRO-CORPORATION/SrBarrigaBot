@@ -84,16 +84,13 @@ export function calculateBilling(input: BillingCalculationInput): BillingCalcula
     };
 }
 
-export interface ClassTotalsStudent {
-    active: boolean;
-    paidAmount: number;
-}
-
 export interface ClassTotalsInput {
     monthlyFee: number;
     billingStartDate: Date;
     referenceDate: Date;
-    students: ClassTotalsStudent[];
+    activeStudents: number;
+    paidByActive: number;
+    paidByInactive: number;
 }
 
 export interface ClassTotalsResult {
@@ -102,23 +99,13 @@ export interface ClassTotalsResult {
 }
 
 export function calculateClassTotals(input: ClassTotalsInput): ClassTotalsResult {
-    const { monthlyFee, billingStartDate, referenceDate, students } = input;
+    const {monthlyFee, billingStartDate, referenceDate, activeStudents, paidByActive, paidByInactive} = input;
 
-    let valorEsperadoTotal = 0;
-    let valorContribuidoTotal = 0;
-
-    for (const student of students) {
-        const paid = round2(student.paidAmount);
-        valorContribuidoTotal += paid;
-
-        valorEsperadoTotal += student.active
-            ? calculateBilling({ monthlyFee, billingStartDate, referenceDate, paidAmount: paid }).valorEsperadoAcumulado
-            : paid;
-    }
+    const {valorEsperadoAcumulado} = calculateBilling({monthlyFee, billingStartDate, referenceDate, paidAmount: 0});
 
     return {
-        valorEsperadoTotal: round2(valorEsperadoTotal),
-        valorContribuidoTotal: round2(valorContribuidoTotal),
+        valorEsperadoTotal: round2(activeStudents * valorEsperadoAcumulado + paidByInactive),
+        valorContribuidoTotal: round2(paidByActive + paidByInactive),
     };
 }
 

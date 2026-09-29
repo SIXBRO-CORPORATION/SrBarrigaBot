@@ -3,6 +3,7 @@ import { StudentRepositoryPort } from '../../core/persistence/student.repository
 import { Student } from '../../domain/student.js';
 import { PrismaConfiguration } from '../configuration/prisma.configuration.js';
 import { StudentMapper } from '../mapper/student.mapper.js';
+import { ACTIVE_STUDENT } from '../commons/where.js';
 
 @Injectable()
 export class StudentRepositoryAdapter implements StudentRepositoryPort {
@@ -27,21 +28,14 @@ export class StudentRepositoryAdapter implements StudentRepositoryPort {
 
     async findAllActive(): Promise<Student[]> {
         const entities = await this.prisma.student.findMany({
-            where: { deletedAt: null, active: true },
+            where: ACTIVE_STUDENT,
             orderBy: { name: 'asc' },
         });
         return entities.map((e) => this.mapper.toDomain(e));
     }
 
-    async findAllIncludingDeleted(): Promise<Student[]> {
-        const entities = await this.prisma.student.findMany();
-        return entities.map((e) => this.mapper.toDomain(e));
-    }
-
     async countActive(): Promise<number> {
-        return this.prisma.student.count({
-            where: { deletedAt: null, active: true },
-        });
+        return this.prisma.student.count({ where: ACTIVE_STUDENT });
     }
 
     async save(model: Student): Promise<Student> {
@@ -50,7 +44,7 @@ export class StudentRepositoryAdapter implements StudentRepositoryPort {
         const saved = model.id
             ? await this.prisma.student.update({
                 where: { id: model.id },
-                data,
+                data: { ...data, modifiedAt: new Date() },
             })
             : await this.prisma.student.create({ data });
 
@@ -64,11 +58,15 @@ export class StudentRepositoryAdapter implements StudentRepositoryPort {
         return entity ? this.mapper.toDomain(entity) : null;
     }
 
+    async findByMatriculaIncludingDeleted(matricula: string): Promise<Student | null> {
+        const entity = await this.prisma.student.findUnique({ where: { matricula } });
+        return entity ? this.mapper.toDomain(entity) : null;
+    }
+
     async existsByMatricula(matricula: string, excludeStudentId?: string): Promise<boolean> {
         const count = await this.prisma.student.count({
             where: {
                 matricula,
-                deletedAt: null,
                 ...(excludeStudentId ? { id: { not: excludeStudentId } } : {}),
             },
         });

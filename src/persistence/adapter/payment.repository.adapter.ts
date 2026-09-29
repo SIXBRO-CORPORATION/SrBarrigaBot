@@ -4,7 +4,7 @@ import { Payment } from '../../domain/payment.js';
 import { PrismaConfiguration } from '../configuration/prisma.configuration.js';
 import { PaymentMapper } from '../mapper/payment.mapper.js';
 import { PaymentStatus } from '../../domain/payment-status.js';
-import { PaymentStatus as PrismaPaymentStatus } from '../../../generated/prisma/enums.js';
+import { ACTIVE_STUDENT, APPROVED_PAYMENT } from '../commons/where.js';
 
 @Injectable()
 export class PaymentRepositoryAdapter implements PaymentRepositoryPort {
@@ -44,22 +44,32 @@ export class PaymentRepositoryAdapter implements PaymentRepositoryPort {
         return entities.map((e) => this.mapper.toDomain(e));
     }
 
-    async sumApprovedGroupedByStudent(studentIds?: string[]): Promise<Map<string, number>> {
+    async sumApprovedGroupedByActiveStudent(): Promise<Map<string, number>> {
         const rows = await this.prisma.payment.groupBy({
             by: ['studentId'],
-            where: {
-                status: PrismaPaymentStatus.APPROVED,
-                deletedAt: null,
-                ...(studentIds ? { studentId: { in: studentIds } } : {}),
-            },
+            where: { ...APPROVED_PAYMENT, student: ACTIVE_STUDENT },
             _sum: { amount: true },
         });
         return new Map(rows.map((row) => [row.studentId, Number(row._sum.amount ?? 0)]));
     }
 
+    async sumApprovedTotals(): Promise<{ active: number; inactive: number }> {
+        const [active, inactive] = await Promise.all([
+            this.prisma.payment.aggregate({
+                where: { ...APPROVED_PAYMENT, student: ACTIVE_STUDENT },
+                _sum: { amount: true },
+            }),
+            this.prisma.payment.aggregate({
+                where: { ...APPROVED_PAYMENT, student: { NOT: ACTIVE_STUDENT } },
+                _sum: { amount: true },
+            }),
+        ]);
+        return { active: Number(active._sum.amount ?? 0), inactive: Number(inactive._sum.amount ?? 0) };
+    }
+
     async sumApprovedByStudentId(studentId: string): Promise<number> {
         const result = await this.prisma.payment.aggregate({
-            where: { studentId, status: PrismaPaymentStatus.APPROVED, deletedAt: null },
+            where: { studentId, ...APPROVED_PAYMENT },
             _sum: { amount: true },
         });
         return Number(result._sum.amount ?? 0);
@@ -67,11 +77,7 @@ export class PaymentRepositoryAdapter implements PaymentRepositoryPort {
 
     async sumApprovedPaidBetween(from: Date, toExclusive: Date): Promise<number> {
         const result = await this.prisma.payment.aggregate({
-            where: {
-                status: PrismaPaymentStatus.APPROVED,
-                deletedAt: null,
-                paidAt: { gte: from, lt: toExclusive },
-            },
+            where: { ...APPROVED_PAYMENT, paidAt: { gte: from, lt: toExclusive } },
             _sum: { amount: true },
         });
         return Number(result._sum.amount ?? 0);
@@ -81,7 +87,7 @@ export class PaymentRepositoryAdapter implements PaymentRepositoryPort {
         const data = this.mapper.toEntity(model);
 
         const saved = model.id
-            ? await this.prisma.payment.update({ where: { id: model.id }, data })
+            ? await this.prisma.payment.update({ where: { id: model.id }, data: { ...data, modifiedAt: new Date() } })
             : await this.prisma.payment.create({ data });
 
         return this.mapper.toDomain(saved);

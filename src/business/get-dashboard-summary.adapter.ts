@@ -23,10 +23,9 @@ export class GetDashboardSummaryAdapter implements GetDashboardSummaryPort {
         const monthStart = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), 1));
         const nextMonthStart = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth() + 1, 1));
 
-        const [alunosAtivos, allStudents, paidByStudent, arrecadadoNoMes] = await Promise.all([
+        const [alunosAtivos, paid, arrecadadoNoMes] = await Promise.all([
             this.studentRepositoryPort.countActive(),
-            this.studentRepositoryPort.findAllIncludingDeleted(),
-            this.paymentRepositoryPort.sumApprovedGroupedByStudent(),
+            this.paymentRepositoryPort.sumApprovedTotals(),
             this.paymentRepositoryPort.sumApprovedPaidBetween(monthStart, nextMonthStart),
         ]);
 
@@ -34,10 +33,9 @@ export class GetDashboardSummaryAdapter implements GetDashboardSummaryPort {
             monthlyFee,
             billingStartDate,
             referenceDate: today,
-            students: allStudents.map((student) => ({
-                active: student.active,
-                paidAmount: paidByStudent.get(student.id) ?? 0,
-            })),
+            activeStudents: alunosAtivos,
+            paidByActive: paid.active,
+            paidByInactive: paid.inactive,
         });
 
         const summary = new DashboardSummary();

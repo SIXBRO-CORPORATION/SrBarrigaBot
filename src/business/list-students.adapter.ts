@@ -20,21 +20,20 @@ export class ListStudentsAdapter implements ListStudentsPort {
         const {monthlyFee, billingStartDate} = await loadBillingConfig(this.systemConfigRepositoryPort, 'consultar alunos');
         const today = new Date();
 
-        const students = await this.studentRepositoryPort.findAllActive();
-        const paidByStudent = await this.paymentRepositoryPort.sumApprovedGroupedByStudent(
-            students.map((student) => student.id),
-        );
+        const [students, paidByStudent] = await Promise.all([
+            this.studentRepositoryPort.findAllActive(),
+            this.paymentRepositoryPort.sumApprovedGroupedByActiveStudent(),
+        ]);
 
         const summaries: StudentSummary[] = [];
 
         for (const student of students) {
             const paidAmount = paidByStudent.get(student.id) ?? 0;
-            const referenceDate = student.inactivatedAt ?? today;
 
             const billing = calculateBilling({
                 monthlyFee,
                 billingStartDate,
-                referenceDate,
+                referenceDate: today,
                 paidAmount,
             });
 

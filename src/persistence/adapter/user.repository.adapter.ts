@@ -29,7 +29,7 @@ export class UserRepositoryAdapter implements UserRepositoryPort {
         const data = this.mapper.toEntity(model);
 
         const saved = model.id
-            ? await this.prisma.user.update({ where: { id: model.id }, data })
+            ? await this.prisma.user.update({ where: { id: model.id }, data: { ...data, modifiedAt: new Date() } })
             : await this.prisma.user.create({ data });
 
         return this.mapper.toDomain(saved);

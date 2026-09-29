@@ -43,7 +43,7 @@ export class UpdateStudentAdapter implements UpdateStudentPort {
             if (matricula !== existing.matricula) {
                 const matriculaExists = await this.studentRepositoryPort.existsByMatricula(matricula, existing.id);
                 if (matriculaExists) {
-                    throw new BusinessException('Já existe um aluno com essa matrícula.');
+                    throw new BusinessException('Essa matrícula já pertence a outro aluno (ativo ou removido).');
                 }
             }
 

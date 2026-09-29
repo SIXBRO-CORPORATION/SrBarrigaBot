@@ -24,12 +24,12 @@ export class GetChargeablePeopleAdapter implements GetChargeablePeoplePort {
     async execute(_context: Context): Promise<ChargeablePerson[]> {
         const {monthlyFee, billingStartDate} = await loadBillingConfig(this.systemConfigRepositoryPort, 'disparar a cobrança');
         const today = new Date();
-        const mesAtual = MESES[today.getMonth()];
+        const mesAtual = MESES[today.getUTCMonth()];
 
-        const students = await this.studentRepositoryPort.findAllActive();
-        const paidByStudent = await this.paymentRepositoryPort.sumApprovedGroupedByStudent(
-            students.map((student) => student.id),
-        );
+        const [students, paidByStudent] = await Promise.all([
+            this.studentRepositoryPort.findAllActive(),
+            this.paymentRepositoryPort.sumApprovedGroupedByActiveStudent(),
+        ]);
 
         const people: ChargeablePerson[] = [];
 

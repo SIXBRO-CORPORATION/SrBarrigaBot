@@ -32,17 +32,16 @@ export class GetStudentDetailAdapter implements GetStudentDetailPort {
 
         const {monthlyFee, billingStartDate} = await loadBillingConfig(this.systemConfigRepositoryPort, 'consultar alunos');
         const today = new Date();
-        
+
         const [payments, paidAmount] = await Promise.all([
             this.paymentRepositoryPort.findByStudentId(student.id),
             this.paymentRepositoryPort.sumApprovedByStudentId(student.id),
         ]);
-        const referenceDate = student.inactivatedAt ?? today;
 
         const billing = calculateBilling({
             monthlyFee,
             billingStartDate,
-            referenceDate,
+            referenceDate: today,
             paidAmount,
         });
 
