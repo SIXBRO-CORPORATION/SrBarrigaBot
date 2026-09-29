@@ -36,7 +36,7 @@ Nível da turma (dashboard):
 
 - `metaMensal` = `mensalidade × nº de alunos ativos` (recalculado sempre, não é campo salvo).
 - `arrecadadoNoMes` = soma dos pagamentos com `data` no mês corrente.
-- `valorEsperadoTotal` = soma do `valorEsperadoAcumulado` de **todos** os alunos que já foram cobrados em algum momento (ativos e removidos — um aluno removido já gerou expectativa de pagamento até a data em que saiu).
+- `valorEsperadoTotal` = soma do `valorEsperadoAcumulado` dos alunos **ativos** + o que cada aluno **inativo/removido** já pagou. Quem saiu não gera dívida nem crédito: o esperado dele é igual ao pago, e o que ele pagou continua contando no contribuído.
 - `valorContribuidoTotal` = soma de **todos** os pagamentos de **todos** os alunos, incluindo os removidos (histórico continua contando, conforme decidido).
 - `diferencaTotal` = `valorContribuidoTotal − valorEsperadoTotal` → turma adiantada (positivo) ou atrasada (negativo) em relação ao ritmo esperado.
 

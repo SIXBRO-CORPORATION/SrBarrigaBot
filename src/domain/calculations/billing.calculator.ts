@@ -4,16 +4,16 @@ export type MonthStatus = 'OK' | 'PENDENTE';
 export type BillingStatus = 'EM_DIA' | 'ATRASADO' | 'ADIANTADO';
 
 export interface StudentMonthStatus {
-    numero: number; // 1-based, 1 = primeiro mês de cobrança
-    referencia: string; // 'YYYY-MM'
+    numero: number;
+    referencia: string;
     status: MonthStatus;
 }
 
 export interface BillingCalculationInput {
     monthlyFee: number;
     billingStartDate: Date;
-    referenceDate: Date; // "hoje", ou a data de inativação do aluno, o que vier primeiro
-    paidAmount: number; // soma dos pagamentos não estornados do aluno
+    referenceDate: Date;
+    paidAmount: number;
 }
 
 export interface BillingCalculationResult {
@@ -81,6 +81,44 @@ export function calculateBilling(input: BillingCalculationInput): BillingCalcula
         valorAtraso,
         status,
         statusMesAMes,
+    };
+}
+
+export interface ClassTotalsStudent {
+    active: boolean;
+    paidAmount: number;
+}
+
+export interface ClassTotalsInput {
+    monthlyFee: number;
+    billingStartDate: Date;
+    referenceDate: Date;
+    students: ClassTotalsStudent[];
+}
+
+export interface ClassTotalsResult {
+    valorEsperadoTotal: number;
+    valorContribuidoTotal: number;
+}
+
+export function calculateClassTotals(input: ClassTotalsInput): ClassTotalsResult {
+    const { monthlyFee, billingStartDate, referenceDate, students } = input;
+
+    let valorEsperadoTotal = 0;
+    let valorContribuidoTotal = 0;
+
+    for (const student of students) {
+        const paid = round2(student.paidAmount);
+        valorContribuidoTotal += paid;
+
+        valorEsperadoTotal += student.active
+            ? calculateBilling({ monthlyFee, billingStartDate, referenceDate, paidAmount: paid }).valorEsperadoAcumulado
+            : paid;
+    }
+
+    return {
+        valorEsperadoTotal: round2(valorEsperadoTotal),
+        valorContribuidoTotal: round2(valorContribuidoTotal),
     };
 }
 

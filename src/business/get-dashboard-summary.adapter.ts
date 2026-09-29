@@ -6,8 +6,7 @@ import {StudentRepositoryPort} from '../core/persistence/student.repository.port
 import {PaymentRepositoryPort} from '../core/persistence/payment.repository.port.js';
 import {SystemConfigRepositoryPort} from '../core/persistence/system-config.repository.port.js';
 import {loadBillingConfig} from './utils/billing-config.js';
-import {calculateBilling} from '../domain/calculations/billing.calculator.js';
-import {round2} from '../domain/calculations/billing.calculator.js'
+import {calculateClassTotals, round2} from '../domain/calculations/billing.calculator.js';
 
 @Injectable()
 export class GetDashboardSummaryAdapter implements GetDashboardSummaryPort {
@@ -31,28 +30,23 @@ export class GetDashboardSummaryAdapter implements GetDashboardSummaryPort {
             this.paymentRepositoryPort.sumApprovedPaidBetween(monthStart, nextMonthStart),
         ]);
 
-        let valorEsperadoTotal = 0;
-        let valorContribuidoTotal = 0;
-
-        for (const student of allStudents) {
-            const billing = calculateBilling({
-                monthlyFee,
-                billingStartDate,
-                referenceDate: student.inactivatedAt ?? today,
+        const {valorEsperadoTotal, valorContribuidoTotal} = calculateClassTotals({
+            monthlyFee,
+            billingStartDate,
+            referenceDate: today,
+            students: allStudents.map((student) => ({
+                active: student.active,
                 paidAmount: paidByStudent.get(student.id) ?? 0,
-            });
-
-            valorEsperadoTotal += billing.valorEsperadoAcumulado;
-            valorContribuidoTotal += billing.valorPagoAcumulado;
-        }
+            })),
+        });
 
         const summary = new DashboardSummary();
         summary.alunosAtivos = alunosAtivos;
         summary.mensalidade = round2(monthlyFee);
         summary.metaMensal = round2(monthlyFee * alunosAtivos);
         summary.arrecadadoNoMes = round2(arrecadadoNoMes);
-        summary.valorEsperadoTotal = round2(valorEsperadoTotal);
-        summary.valorContribuidoTotal = round2(valorContribuidoTotal);
+        summary.valorEsperadoTotal = valorEsperadoTotal;
+        summary.valorContribuidoTotal = valorContribuidoTotal;
         summary.diferencaTotal = round2(valorContribuidoTotal - valorEsperadoTotal);
 
         return summary;
