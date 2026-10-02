@@ -56,7 +56,7 @@ export class PublicController {
 
         return ApiResponse.success(
             await this.paymentMapper.toResponse(saved),
-            'Pagamento registrado! Assim que conferirmos o comprovante, ele será aprovado.',
+            'Pagamento registrado! Assim que conferirmos o comprovante, ele será aprovado',
         );
     }
 }
