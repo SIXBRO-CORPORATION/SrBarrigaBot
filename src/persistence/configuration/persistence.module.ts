@@ -13,8 +13,17 @@ import {SystemConfigMapper} from '../mapper/system-config.mapper.js';
 import {SystemConfigRepositoryAdapter} from '../adapter/system-config.repository.adapter.js';
 import {SystemConfigRepositoryPort} from '../../core/persistence/system-config.repository.port.js';
 
+import {EntryMapper} from '../mapper/entry.mapper.js';
+import {EntryRepositoryAdapter} from '../adapter/entry.repository.adapter.js';
+import {EntryRepositoryPort} from '../../core/persistence/entry.repository.port.js';
+
 @Module({
     providers: [
+        EntryMapper,
+        {
+            provide: EntryRepositoryPort,
+            useClass: EntryRepositoryAdapter,
+        },
         PrismaConfiguration,
         UserMapper,
         {
@@ -38,6 +47,7 @@ import {SystemConfigRepositoryPort} from '../../core/persistence/system-config.r
         },
     ],
     exports: [
+        EntryRepositoryPort,
         UserRepositoryPort,
         StudentRepositoryPort,
         PaymentRepositoryPort,

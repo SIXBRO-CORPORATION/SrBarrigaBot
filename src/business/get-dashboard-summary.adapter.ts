@@ -5,6 +5,7 @@ import {DashboardSummary} from '../domain/dashboard-summary.js';
 import {StudentRepositoryPort} from '../core/persistence/student.repository.port.js';
 import {PaymentRepositoryPort} from '../core/persistence/payment.repository.port.js';
 import {SystemConfigRepositoryPort} from '../core/persistence/system-config.repository.port.js';
+import {EntryRepositoryPort} from '../core/persistence/entry.repository.port.js';
 import {loadBillingConfig} from './utils/billing-config.js';
 import {calculateClassTotals, round2} from '../domain/calculations/billing.calculator.js';
 
@@ -14,6 +15,7 @@ export class GetDashboardSummaryAdapter implements GetDashboardSummaryPort {
         private readonly studentRepositoryPort: StudentRepositoryPort,
         private readonly paymentRepositoryPort: PaymentRepositoryPort,
         private readonly systemConfigRepositoryPort: SystemConfigRepositoryPort,
+        private readonly entryRepositoryPort: EntryRepositoryPort,
     ) {}
 
     async execute(_context: Context): Promise<DashboardSummary> {
@@ -23,10 +25,11 @@ export class GetDashboardSummaryAdapter implements GetDashboardSummaryPort {
         const monthStart = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), 1));
         const nextMonthStart = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth() + 1, 1));
 
-        const [alunosAtivos, paid, arrecadadoNoMes] = await Promise.all([
+        const [alunosAtivos, paid, arrecadadoNoMes, entries] = await Promise.all([
             this.studentRepositoryPort.countActive(),
             this.paymentRepositoryPort.sumApprovedTotals(),
             this.paymentRepositoryPort.sumApprovedPaidBetween(monthStart, nextMonthStart),
+            this.entryRepositoryPort.sumByType(),
         ]);
 
         const {valorEsperadoTotal, valorContribuidoTotal} = calculateClassTotals({
@@ -44,7 +47,10 @@ export class GetDashboardSummaryAdapter implements GetDashboardSummaryPort {
         summary.metaMensal = round2(monthlyFee * alunosAtivos);
         summary.arrecadadoNoMes = round2(arrecadadoNoMes);
         summary.valorEsperadoTotal = valorEsperadoTotal;
-        summary.valorContribuidoTotal = valorContribuidoTotal;
+        // Lançamentos movem o total arrecadado, mas a diferença continua medindo só as mensalidades.
+        summary.totalLucros = round2(entries.lucros);
+        summary.totalGastos = round2(entries.gastos);
+        summary.valorContribuidoTotal = round2(valorContribuidoTotal + entries.lucros - entries.gastos);
         summary.diferencaTotal = round2(valorContribuidoTotal - valorEsperadoTotal);
 
         return summary;

@@ -28,6 +28,8 @@ export class DashboardController {
             arrecadadoNoMes: summary.arrecadadoNoMes,
             valorEsperadoTotal: summary.valorEsperadoTotal,
             valorContribuidoTotal: summary.valorContribuidoTotal,
+            totalLucros: summary.totalLucros,
+            totalGastos: summary.totalGastos,
             diferencaTotal: summary.diferencaTotal,
         });
     }

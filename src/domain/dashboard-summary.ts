@@ -5,5 +5,7 @@ export class DashboardSummary {
     arrecadadoNoMes: number;
     valorEsperadoTotal: number;
     valorContribuidoTotal: number;
+    totalLucros: number;
+    totalGastos: number;
     diferencaTotal: number;
 }

@@ -72,3 +72,23 @@ model SystemConfig {
 
   @@map("system_config")
 }
+
+enum EntryType {
+  GASTO
+  LUCRO
+
+  @@map("entry_type")
+}
+
+model Entry {
+  id         String    @id @default(uuid())
+  type       EntryType
+  title      String
+  details    String?
+  amount     Decimal   @db.Decimal(10, 2)
+  createdAt  DateTime  @default(now()) @map("created_at")
+  modifiedAt DateTime  @updatedAt @map("modified_at")
+  deletedAt  DateTime? @map("deleted_at")
+
+  @@map("entries")
+}

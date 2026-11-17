@@ -50,6 +50,15 @@ import {ListPendingPaymentsAdapter} from "../list-pending-payments.adapter.js";
 import {GetPixInfoPort} from "../../core/business/get-pix-info.port.js";
 import {GetPixInfoAdapter} from "../get-pix-info.adapter.js";
 
+import {CreateEntryPort} from "../../core/business/create-entry.port.js";
+import {CreateEntryAdapter} from "../create-entry.adapter.js";
+import {UpdateEntryPort} from "../../core/business/update-entry.port.js";
+import {UpdateEntryAdapter} from "../update-entry.adapter.js";
+import {RemoveEntryPort} from "../../core/business/remove-entry.port.js";
+import {RemoveEntryAdapter} from "../remove-entry.adapter.js";
+import {ListEntriesPort} from "../../core/business/list-entries.port.js";
+import {ListEntriesAdapter} from "../list-entries.adapter.js";
+
 @Module({
     imports: [
         ScheduleModule.forRoot(),
@@ -60,6 +69,10 @@ import {GetPixInfoAdapter} from "../get-pix-info.adapter.js";
     ],
     providers: [
         ChargeScheduler,
+        { provide: CreateEntryPort, useClass: CreateEntryAdapter },
+        { provide: UpdateEntryPort, useClass: UpdateEntryAdapter },
+        { provide: RemoveEntryPort, useClass: RemoveEntryAdapter },
+        { provide: ListEntriesPort, useClass: ListEntriesAdapter },
         { provide: CreateUserPort, useClass: CreateUserAdapter },
         { provide: ListUsersPort, useClass: ListUsersAdapter },
         { provide: GetUserPort, useClass: GetUserAdapter },
@@ -87,6 +100,10 @@ import {GetPixInfoAdapter} from "../get-pix-info.adapter.js";
         { provide: GetPixInfoPort, useClass: GetPixInfoAdapter },
     ],
     exports: [
+        CreateEntryPort,
+        UpdateEntryPort,
+        RemoveEntryPort,
+        ListEntriesPort,
         CreateUserPort,
         ListUsersPort,
         GetUserPort,

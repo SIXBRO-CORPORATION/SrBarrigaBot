@@ -14,10 +14,11 @@ import {StudentMapper} from "../mapper/student.mapper.js";
 import {PaymentMapper} from "../mapper/payment.mapper.js";
 import {InfrastructureModule} from "../../infrastructure/configuration/insfrastructure.module.js";
 import {UserMapper} from "../mapper/user.mapper.js";
+import {EntryController} from "../controller/entry.controller.js";
 
 @Module({
     imports: [BusinessModule, SecurityModule, PersistenceModule, MessagingModule, InfrastructureModule],
-    controllers: [UserController, WhatsAppController, StudentController, ConfigController, PaymentController, DashboardController, PublicController],
+    controllers: [UserController, WhatsAppController, StudentController, ConfigController, PaymentController, DashboardController, PublicController, EntryController],
     providers: [StudentMapper, PaymentMapper, UserMapper],
 })
 export class WebModule {}
